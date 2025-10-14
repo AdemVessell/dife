@@ -2,7 +2,7 @@
 
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1EXAMPLE_LINK_TO_NOTEBOOK)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PyPI version](https://badge.fury.io/py/dife.svg)](https://badge.fury.io/py/dife)
+
 
 A novel, closed-form equation modeling **catastrophic forgetting** in AI continual learning: exponential decay meets linear task interference. Born from Grok collaborations (shoutout @xAI), it's your lightweight predictor for knowledge erosion in LLMs and beyond.
 
