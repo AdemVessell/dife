@@ -1,3 +1,5 @@
+<img width="1532" height="866" alt="DIFE chart" src="https://github.com/user-attachments/assets/892a3de2-bf02-4a3e-8b1d-effd1ca2ec5a" />
+<img width="1532" height="866" alt="DIFE chart comp" src="https://github.com/user-attachments/assets/45e26d62-61af-4d6d-ae6b-29ccb935a118" />
 # DIFE: Decay-Interference Forgetting Equation
 
 [![Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1EXAMPLE_LINK_TO_NOTEBOOK)
