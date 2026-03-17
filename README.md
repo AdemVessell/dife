@@ -90,6 +90,50 @@ DIFE parameters were fitted to each method's forgetting trajectory via different
 
 ---
 
+## Benchmark Results: Split-CIFAR-10 (3 tasks)
+
+Tasks: airplane/automobile · bird/cat · deer/dog (2 classes each).
+Architecture: SmallCNN (3→32→64 conv + 2 FC, ~750 K params). Adam lr=1e-3, 5 epochs/task.
+
+### Accuracy Matrix
+
+| After task | T1 | T2 | T3 |
+|---|---|---|---|
+| **FT**  t=1 | 0.960 | — | — |
+| **FT**  t=2 | 0.736 | 0.849 | — |
+| **FT**  t=3 | 0.719 | 0.690 | 0.913 |
+| **EWC** t=3 | 0.701 | 0.669 | 0.914 |
+| **SI**  t=3 | 0.731 | 0.669 | 0.910 |
+
+### Summary Metrics
+
+| Method | Avg Final Acc ↑ | Avg Forgetting ↓ | BWT ↑ |
+|---|---|---|---|
+| **Fine-tuning** | **0.774** | **0.200** | −0.200 |
+| EWC (λ=5000) | 0.761 | 0.221 | −0.221 |
+| SI (c=0.1) | 0.770 | 0.201 | −0.201 |
+
+### DIFE Fit Results
+
+| Method | α (fitted) | β (fitted) | RMSE |
+|---|---|---|---|
+| FT  | 0.8353 | ≈0 | **0.04845** |
+| EWC | 0.8190 | ≈0 | 0.06249 |
+| SI  | 0.8230 | ≈0 | 0.08349 |
+
+**Observations:**
+- On CIFAR the β term collapses toward 0 (only 3 observations; interference is dominated by exponential decay over such a short sequence)
+- DIFE still captures FT forgetting to within 5% RMSE
+- EWC at λ=5000 slightly *hurts* on CIFAR—the λ tuned for MNIST is too strong for the CNN weight scale; re-tuning λ is expected to recover the typical EWC gain
+
+### Figures
+
+| Forgetting curves (FT vs DIFE fit) | Method comparison | Accuracy heatmaps |
+|---|---|---|
+| ![forgetting](results/cifar/split-cifar-10_forgetting_curves.png) | ![comparison](results/cifar/split-cifar-10_comparison.png) | ![heatmap](results/cifar/split-cifar-10_heatmap.png) |
+
+---
+
 ## Repository Structure
 
 ```
@@ -99,13 +143,15 @@ dife/
 │   ├── baselines.py           # EWC and SI implementations
 │   ├── data.py                # Permuted-MNIST and Split-CIFAR-10 loaders
 │   ├── fitting.py             # α/β hyperparameter fitting + CL metrics
-│   ├── models.py              # MLP architecture
+│   ├── models.py              # MLP + SmallCNN architectures
 │   └── plotting.py            # Figures
 ├── run_mnist_benchmark.py     # Seq-MNIST experiment entry point
+├── run_cifar_benchmark.py     # Split-CIFAR-10 experiment entry point
 ├── tests/
 │   └── test_dife.py           # 20 pytest tests
 ├── results/
-│   └── mnist/                 # Figures + JSON summary
+│   ├── mnist/                 # Figures + JSON summary (Permuted MNIST)
+│   └── cifar/                 # Figures + JSON summary (Split CIFAR-10)
 └── requirements.txt
 ```
 
