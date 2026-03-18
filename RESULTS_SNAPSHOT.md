@@ -58,11 +58,22 @@ _Higher is better; 0 = no replay._
 
 ## Table 3 — split_cifar (Partial)
 
-**1/27 jobs complete** as of snapshot date.
+**12 jobs complete** as of snapshot date.
 
 | Method | Seed | AA | AF | Replay |
 |--------|------|----|----|--------|
-| FT                 | seed_0 | 0.711 | 0.268 |          0 |
+| ConstReplay_0.1    | seed_0 | 0.786 | 0.154 |     11,376 |
+| ConstReplay_0.1    | seed_1 | 0.793 | 0.158 |     11,376 |
+| ConstReplay_0.3    | seed_0 | 0.816 | 0.115 |     36,024 |
+| ConstReplay_0.3    | seed_1 | 0.834 | 0.089 |     36,024 |
+| DIFE_MV            | seed_0 | 0.846 | 0.072 |     85,320 |
+| DIFE_MV            | seed_1 | 0.847 | 0.071 |     86,742 |
+| DIFE_only          | seed_0 | 0.845 | 0.065 |    110,205 |
+| DIFE_only          | seed_1 | 0.860 | 0.056 |    107,124 |
+| FT                 | seed_0 | 0.701 | 0.269 |          0 |
+| FT                 | seed_1 | 0.689 | 0.282 |          0 |
+| MV_only            | seed_0 | 0.844 | 0.061 |     97,170 |
+| MV_only            | seed_1 | 0.848 | 0.060 |     97,170 |
 
 _Do not draw conclusions from partial data. See RESUME.md to continue this run._
 

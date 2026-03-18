@@ -61,10 +61,14 @@ def _load_fast_track():
 
 
 def _load_split_cifar_partial():
-    """Load any split_cifar results found."""
+    """Load any split_cifar results found (fast-track path first, then full-run)."""
     files = sorted(glob.glob(
-        os.path.join(_ROOT, "results", "split_cifar", "*", "seed_*", "metrics.json")
+        os.path.join(_ROOT, "results", "fast_track", "split_cifar", "*", "seed_*", "metrics.json")
     ))
+    if not files:
+        files = sorted(glob.glob(
+            os.path.join(_ROOT, "results", "split_cifar", "*", "seed_*", "metrics.json")
+        ))
     rows = []
     for f in files:
         parts = f.split(os.sep)
@@ -173,7 +177,7 @@ def generate(write_file=False):
 
     if partial:
         lines += [
-            f"**{len(partial)}/27 jobs complete** as of snapshot date.",
+            f"**{len(partial)} jobs complete** as of snapshot date.",
             "",
             "| Method | Seed | AA | AF | Replay |",
             "|--------|------|----|----|--------|",
