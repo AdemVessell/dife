@@ -1,0 +1,7 @@
+[perm_mnist] Loaded cached grid search params: EWC lambda=5000.0, SI c=0.01
+  [EWC] task 1: ['0.976']
+  [EWC] task 2: ['0.893', '0.978']
+  [EWC] task 3: ['0.732', '0.762', '0.974']
+  [EWC] task 4: ['0.514', '0.691', '0.916', '0.977']
+  [EWC] task 5: ['0.404', '0.684', '0.831', '0.935', '0.977']
+[done] perm_mnist seed=4 method=EWC AA=0.766 AF=0.263

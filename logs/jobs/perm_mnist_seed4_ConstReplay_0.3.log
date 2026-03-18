@@ -1,0 +1,7 @@
+[perm_mnist] Loaded cached grid search params: EWC lambda=5000.0, SI c=0.01
+  [ConstReplay_0.3] task 1: ['0.976']
+  [ConstReplay_0.3] task 2: ['0.972', '0.978']
+  [ConstReplay_0.3] task 3: ['0.962', '0.961', '0.975']
+  [ConstReplay_0.3] task 4: ['0.959', '0.959', '0.970', '0.977']
+  [ConstReplay_0.3] task 5: ['0.943', '0.951', '0.962', '0.966', '0.976']
+[done] perm_mnist seed=4 method=ConstReplay_0.3 AA=0.959 AF=0.021
