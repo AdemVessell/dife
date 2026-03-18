@@ -2,6 +2,7 @@
 
 import sys
 import os
+import json
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "memory-vortex-dife-lab"))
@@ -82,6 +83,15 @@ def run_benchmark(bench_name: str, cfg, n_seeds: int) -> dict:
         loaders = _load_data(bench_name, cfg, seed=seed)
 
         for method in ALL_METHODS:
+            path = os.path.join(
+                cfg.output_dir, bench_name, method, f"seed_{seed}", "metrics.json"
+            )
+            if os.path.exists(path):
+                print(f"\n[{bench_name}] seed={seed}  method={method} — skipping (exists)")
+                with open(path) as f:
+                    all_results[method][seed] = json.load(f)
+                continue
+
             print(f"\n[{bench_name}] seed={seed}  method={method}")
             model = _fresh_model(bench_name)
             result = train_one_method(
