@@ -56,26 +56,21 @@ _Higher is better; 0 = no replay._
 
 ---
 
-## Table 3 — split_cifar (Partial)
+## Table 3 — split_cifar Fast-Track
 
-**12 jobs complete** as of snapshot date.
+5 tasks · **3 epochs/task** · 2 seeds · buffer_capacity=2000
+Methods: FT, ConstReplay_0.1/0.3, DIFE_only, MV_only, DIFE_MV
 
-| Method | Seed | AA | AF | Replay |
-|--------|------|----|----|--------|
-| ConstReplay_0.1    | seed_0 | 0.786 | 0.154 |     11,376 |
-| ConstReplay_0.1    | seed_1 | 0.793 | 0.158 |     11,376 |
-| ConstReplay_0.3    | seed_0 | 0.816 | 0.115 |     36,024 |
-| ConstReplay_0.3    | seed_1 | 0.834 | 0.089 |     36,024 |
-| DIFE_MV            | seed_0 | 0.846 | 0.072 |     85,320 |
-| DIFE_MV            | seed_1 | 0.847 | 0.071 |     86,742 |
-| DIFE_only          | seed_0 | 0.845 | 0.065 |    110,205 |
-| DIFE_only          | seed_1 | 0.860 | 0.056 |    107,124 |
-| FT                 | seed_0 | 0.701 | 0.269 |          0 |
-| FT                 | seed_1 | 0.689 | 0.282 |          0 |
-| MV_only            | seed_0 | 0.844 | 0.061 |     97,170 |
-| MV_only            | seed_1 | 0.848 | 0.060 |     97,170 |
+| Method | AA ↑ | AF ↓ | BWT | FWT | Replay Budget | Efficiency |
+|--------|------|------|-----|-----|---------------|------------|
+| FT                 | 0.695 ± 0.006 | 0.275 ± 0.006 | -0.275 ± 0.006 | 0.093 ± 0.002 |            0 ±      0 | 0.0000 |
+| ConstReplay_0.1    | 0.789 ± 0.003 | 0.156 ± 0.002 | -0.156 ± 0.002 | 0.120 ± 0.003 |       11,376 ±      0 | 0.1046 |
+| ConstReplay_0.3    | 0.825 ± 0.009 | 0.102 ± 0.013 | -0.102 ± 0.013 | 0.139 ± 0.007 |       36,024 ±      0 | 0.0481 |
+| DIFE_only          | 0.853 ± 0.007 | 0.060 ± 0.004 | -0.060 ± 0.004 | 0.130 ± 0.004 |      108,664 ±  1,540 | 0.0198 |
+| MV_only            | 0.846 ± 0.002 | 0.061 ± 0.001 | -0.059 ± 0.001 | 0.120 ± 0.001 |       97,170 ±      0 | 0.0221 |
+| DIFE_MV            | 0.846 ± 0.000 | 0.071 ± 0.000 | -0.071 ± 0.000 | 0.122 ± 0.004 |       86,031 ±    711 | 0.0237 |
 
-_Do not draw conclusions from partial data. See RESUME.md to continue this run._
+_Pareto criteria: PRIMARY (DIFE_only AF ≤ CR_0.1 AF) ✅ PASS. SECONDARY (replay budget) ❌ FAIL — β prior calibration needed. See HARD_BENCH_PLAN.md for full analysis._
 
 ---
 

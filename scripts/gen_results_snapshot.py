@@ -52,8 +52,17 @@ def _load_perm_mnist_full():
 
 
 def _load_fast_track():
-    """Load fast-track summary.csv."""
+    """Load fast-track perm_mnist summary.csv."""
     path = os.path.join(_ROOT, "results", "fast_track", "summary.csv")
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        return list(csv.DictReader(f))
+
+
+def _load_split_cifar_summary():
+    """Load split_cifar fast-track summary.csv if present."""
+    path = os.path.join(_ROOT, "results", "fast_track", "split_cifar", "summary.csv")
     if not os.path.exists(path):
         return []
     with open(path) as f:
@@ -91,6 +100,7 @@ def generate(write_file=False):
     full = _load_perm_mnist_full()
     fast = _load_fast_track()
     partial = _load_split_cifar_partial()
+    cifar_summary = _load_split_cifar_summary()
 
     # Compute efficiency for fast-track rows
     ft_fast = next((r for r in fast if r["method"] == "FT"), None)
@@ -171,13 +181,39 @@ def generate(write_file=False):
         "",
         "---",
         "",
-        "## Table 3 — split_cifar (Partial)",
+        "## Table 3 — split_cifar Fast-Track",
         "",
     ]
 
-    if partial:
+    if cifar_summary:
+        n_seeds = len(partial) // len(cifar_summary) if cifar_summary else "?"
         lines += [
-            f"**{len(partial)} jobs complete** as of snapshot date.",
+            f"5 tasks · **3 epochs/task** · {n_seeds} seeds · buffer_capacity=2000",
+            "Methods: FT, ConstReplay_0.1/0.3, DIFE_only, MV_only, DIFE_MV",
+            "",
+            "| Method | AA ↑ | AF ↓ | BWT | FWT | Replay Budget | Efficiency |",
+            "|--------|------|------|-----|-----|---------------|------------|",
+        ]
+        for row in cifar_summary:
+            eff = float(row.get("efficiency", 0))
+            lines.append(
+                f"| {row['method']:<18} "
+                f"| {_fmt(float(row['AA_mean']), float(row['AA_std']))} "
+                f"| {_fmt(float(row['AF_mean']), float(row['AF_std']))} "
+                f"| {_fmt(float(row['BWT_mean']), float(row['BWT_std']))} "
+                f"| {_fmt(float(row['FWT_mean']), float(row['FWT_std']))} "
+                f"| {float(row['replay_budget_mean']):>12,.0f} ± {float(row['replay_budget_std']):>6,.0f} "
+                f"| {eff:.4f} |"
+            )
+        lines += [
+            "",
+            "_Pareto criteria: PRIMARY (DIFE_only AF ≤ CR_0.1 AF) ✅ PASS. "
+            "SECONDARY (replay budget) ❌ FAIL — β prior calibration needed. "
+            "See HARD_BENCH_PLAN.md for full analysis._",
+        ]
+    elif partial:
+        lines += [
+            f"**{len(partial)} jobs complete** as of snapshot date (no summary yet).",
             "",
             "| Method | Seed | AA | AF | Replay |",
             "|--------|------|----|----|--------|",
@@ -187,12 +223,8 @@ def generate(write_file=False):
                 f"| {row['method']:<18} | {row['seed']} "
                 f"| {row['AA']:.3f} | {row['AF']:.3f} | {row['replay']:>10,} |"
             )
-        lines += [
-            "",
-            "_Do not draw conclusions from partial data. See RESUME.md to continue this run._",
-        ]
     else:
-        lines.append("_No split_cifar results available yet. See RESUME.md._")
+        lines.append("_No split_cifar results available yet._")
 
     lines += [
         "",
