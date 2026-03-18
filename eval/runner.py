@@ -3,6 +3,7 @@
 import sys
 import os
 import json
+import gc
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "memory-vortex-dife-lab"))
@@ -52,20 +53,19 @@ def _fresh_model(bench_name: str):
         return fresh_cnn(output_dim=2)
 
 
-def run_benchmark(bench_name: str, cfg, n_seeds: int) -> dict:
-    """Run all methods × all seeds for one benchmark.
+def _grid_search_params(bench_name: str, cfg) -> tuple:
+    """Return (best_ewc_lam, best_si_c), loading from cache if available."""
+    cache_path = os.path.join(cfg.output_dir, bench_name, "grid_search_params.json")
+    if os.path.exists(cache_path):
+        with open(cache_path) as f:
+            p = json.load(f)
+        print(f"[{bench_name}] Loaded cached grid search params: EWC lambda={p['ewc_lam']}, SI c={p['si_c']}")
+        return p["ewc_lam"], p["si_c"]
 
-    Returns:
-        Nested dict: {method: {seed: metrics_dict}}
-    """
-    seeds = list(range(n_seeds))
-
-    # Grid search using seed 42 (run once, shared across all seeds)
     print(f"\n[{bench_name}] Running hyperparameter grid search (seed={CANONICAL_SEED})...")
     torch.manual_seed(CANONICAL_SEED)
     np.random.seed(CANONICAL_SEED)
     loaders_gs = _load_data(bench_name, cfg, seed=CANONICAL_SEED)
-
     model_factory = lambda: _fresh_model(bench_name)
     best_ewc_lam = find_best_ewc_lambda(
         loaders_gs, cfg.ewc_lambdas, cfg.epochs_per_task, cfg.lr, model_factory
@@ -73,7 +73,24 @@ def run_benchmark(bench_name: str, cfg, n_seeds: int) -> dict:
     best_si_c = find_best_si_c(
         loaders_gs, cfg.si_cs, cfg.epochs_per_task, cfg.lr, model_factory
     )
+    del loaders_gs
+    gc.collect()
+
+    os.makedirs(os.path.dirname(cache_path), exist_ok=True)
+    with open(cache_path, "w") as f:
+        json.dump({"ewc_lam": best_ewc_lam, "si_c": best_si_c}, f)
     print(f"[{bench_name}] Best EWC lambda={best_ewc_lam}, SI c={best_si_c}")
+    return best_ewc_lam, best_si_c
+
+
+def run_benchmark(bench_name: str, cfg, n_seeds: int) -> dict:
+    """Run all methods × all seeds for one benchmark.
+
+    Returns:
+        Nested dict: {method: {seed: metrics_dict}}
+    """
+    seeds = list(range(n_seeds))
+    best_ewc_lam, best_si_c = _grid_search_params(bench_name, cfg)
 
     all_results = {m: {} for m in ALL_METHODS}
 
@@ -83,12 +100,12 @@ def run_benchmark(bench_name: str, cfg, n_seeds: int) -> dict:
         loaders = _load_data(bench_name, cfg, seed=seed)
 
         for method in ALL_METHODS:
-            path = os.path.join(
+            out_path = os.path.join(
                 cfg.output_dir, bench_name, method, f"seed_{seed}", "metrics.json"
             )
-            if os.path.exists(path):
+            if os.path.exists(out_path):
                 print(f"\n[{bench_name}] seed={seed}  method={method} — skipping (exists)")
-                with open(path) as f:
+                with open(out_path) as f:
                     all_results[method][seed] = json.load(f)
                 continue
 
@@ -113,17 +130,13 @@ def run_benchmark(bench_name: str, cfg, n_seeds: int) -> dict:
                 n_classes_per_task=n_classes,
                 pre_task_acc=result.get("pre_task_acc", []),
             )
-            # Attach raw histories for plotting
             metrics["acc_matrix"] = result["acc_matrix"]
             metrics["r_t_history"] = result["r_t_history"]
             metrics["mv_proxy_history"] = result["mv_proxy_history"]
             metrics["dife_params_history"] = result["dife_params_history"]
             metrics["pre_task_acc"] = result.get("pre_task_acc", [])
 
-            path = os.path.join(
-                cfg.output_dir, bench_name, method, f"seed_{seed}", "metrics.json"
-            )
-            save_metrics(metrics, path)
+            save_metrics(metrics, out_path)
             all_results[method][seed] = metrics
             print(
                 f"  [{bench_name}] {method} seed={seed} "
@@ -132,6 +145,15 @@ def run_benchmark(bench_name: str, cfg, n_seeds: int) -> dict:
                 f"BWT={metrics['bwt']:.3f} "
                 f"FWT={metrics['fwt']:.3f}"
             )
+
+            # Free model and result tensors between jobs
+            del model, result
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
+        del loaders
+        gc.collect()
 
     return all_results
 
