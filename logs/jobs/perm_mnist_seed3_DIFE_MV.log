@@ -1,0 +1,9 @@
+[perm_mnist] Loaded cached grid search params: EWC lambda=5000.0, SI c=0.01
+  [DIFE_MV] task 1: ['0.974']
+  [DIFE_MV] task 2: ['0.971', '0.977']
+  [DIFE_MV] task 3: ['0.966', '0.972', '0.981']
+  [DIFE_MV] task 4: ['0.958', '0.964', '0.968', '0.977']
+  Discovered 'mv_online'  val_MAE=0.0000  test_MAE=0.0000  λ=1.00e-04
+  [DIFE_MV] task 5: ['0.909', '0.884', '0.905', '0.878', '0.979']
+  Discovered 'mv_online'  val_MAE=0.0283  test_MAE=0.0304  λ=1.00e-04
+[done] perm_mnist seed=3 method=DIFE_MV AA=0.911 AF=0.083
