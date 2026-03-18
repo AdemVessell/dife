@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 """Fast-track evaluation suite for Colossus-2 integration research.
 
-Answers three high-value questions using only Permuted-MNIST:
+Answers three high-value questions:
   Q1: Is DIFE a stable online scheduler signal (alpha, beta) across seeds/tasks?
   Q2: Does MV add measurable value vs fixed replay budgets and DIFE-only?
   Q3: What is the correlation between the MV proxy and subsequent forgetting?
 
 Design:
-  - 6 methods (drops EWC, SI, RandReplay vs full suite)
-  - 3 seeds x 5 tasks x 3 epochs/task  (~10-12 min on CPU)
+  - 6 methods by default (drops EWC, SI, RandReplay vs full suite)
+  - 3 seeds x 5 tasks x 3 epochs/task  (~10-12 min on CPU for perm_mnist)
   - Results isolated to results/fast_track/ (never overwrites main results/)
   - Skip logic: jobs with existing metrics.json are silently skipped
   - Generates: summary.csv, RESULTS.md, two PNG plots
 
 Usage:
     python run_fast_track.py [--device cpu] [--seeds 0 1 2]
+    python run_fast_track.py --bench split_cifar --seeds 0 1 --epochs-per-task 3
+    python run_fast_track.py --methods FT DIFE_only DIFE_MV
 """
 
 import argparse
@@ -36,20 +38,26 @@ from eval.metrics import compute_all_metrics, save_metrics
 from eval.runner import _load_data, _fresh_model, _grid_search_params
 from eval.trainer import train_one_method
 
-METHODS = ["FT", "ConstReplay_0.1", "ConstReplay_0.3", "DIFE_only", "MV_only", "DIFE_MV"]
+ALL_METHODS = ["FT", "ConstReplay_0.1", "ConstReplay_0.3", "DIFE_only", "MV_only", "DIFE_MV"]
+DEFAULT_METHODS = ALL_METHODS
 DEFAULT_SEEDS = [0, 1, 2]
-BENCH = "perm_mnist"
-EPOCHS_PER_TASK = 3
+DEFAULT_BENCH = "perm_mnist"
+DEFAULT_EPOCHS_PER_TASK = 3
 OUTPUT_ROOT = "results/fast_track"
+
+# Module-level vars set from CLI args in main(); used by helper functions
+METHODS = DEFAULT_METHODS
+BENCH = DEFAULT_BENCH
+EPOCHS_PER_TASK = DEFAULT_EPOCHS_PER_TASK
 
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
 
-def make_fast_track_config(device: str = "cpu"):
-    cfg = make_bench_config(BENCH, device=device)
-    cfg.epochs_per_task = EPOCHS_PER_TASK
+def make_fast_track_config(bench: str, epochs_per_task: int, device: str = "cpu"):
+    cfg = make_bench_config(bench, device=device)
+    cfg.epochs_per_task = epochs_per_task
     cfg.output_dir = OUTPUT_ROOT
     return cfg
 
@@ -58,25 +66,25 @@ def make_fast_track_config(device: str = "cpu"):
 # Run jobs
 # ---------------------------------------------------------------------------
 
-def run_all_jobs(cfg, seeds: list) -> dict:
+def run_all_jobs(cfg, seeds: list, bench: str, methods: list) -> dict:
     """Run all method x seed jobs, skipping completed ones.
 
     Returns nested dict: {method: {seed: metrics_dict}}
     """
-    best_ewc_lam, best_si_c = _grid_search_params(BENCH, cfg)
-    all_results = {m: {} for m in METHODS}
-    total = len(METHODS) * len(seeds)
+    best_ewc_lam, best_si_c = _grid_search_params(bench, cfg)
+    all_results = {m: {} for m in methods}
+    total = len(methods) * len(seeds)
     done = 0
 
     for seed in seeds:
         torch.manual_seed(seed)
         np.random.seed(seed)
-        loaders = _load_data(BENCH, cfg, seed=seed)
+        loaders = _load_data(bench, cfg, seed=seed)
 
-        for method in METHODS:
+        for method in methods:
             done += 1
             out_path = os.path.join(
-                cfg.output_dir, BENCH, method, f"seed_{seed}", "metrics.json"
+                cfg.output_dir, bench, method, f"seed_{seed}", "metrics.json"
             )
 
             if os.path.exists(out_path):
@@ -86,7 +94,7 @@ def run_all_jobs(cfg, seeds: list) -> dict:
                 continue
 
             print(f"\n[{done}/{total}] run   {method}  seed={seed}")
-            model = _fresh_model(BENCH)
+            model = _fresh_model(bench)
             result = train_one_method(
                 method=method,
                 model=model,
@@ -102,7 +110,7 @@ def run_all_jobs(cfg, seeds: list) -> dict:
                 r_t_history=result["r_t_history"],
                 total_replay_samples=result["total_replay_samples"],
                 wall_clock=result["wall_clock_seconds"],
-                n_classes_per_task=10,
+                n_classes_per_task=10 if bench == "perm_mnist" else 2,
                 pre_task_acc=result.get("pre_task_acc", []),
             )
             metrics["acc_matrix"] = result["acc_matrix"]
@@ -430,20 +438,31 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--device", default="cpu")
     parser.add_argument("--seeds", nargs="+", type=int, default=DEFAULT_SEEDS)
+    parser.add_argument("--bench", default=DEFAULT_BENCH, choices=["perm_mnist", "split_cifar"])
+    parser.add_argument("--epochs-per-task", type=int, default=DEFAULT_EPOCHS_PER_TASK,
+                        dest="epochs_per_task")
+    parser.add_argument("--methods", nargs="+", default=DEFAULT_METHODS,
+                        choices=ALL_METHODS, metavar="METHOD")
     args = parser.parse_args()
+
+    # Update module-level vars so helper functions pick them up
+    global METHODS, BENCH, EPOCHS_PER_TASK
+    METHODS = args.methods
+    BENCH = args.bench
+    EPOCHS_PER_TASK = args.epochs_per_task
 
     print("=" * 60)
     print("DIFE x MV Fast-Track Evaluation (Colossus-2)")
     print(f"  bench={BENCH}  epochs/task={EPOCHS_PER_TASK}  "
           f"seeds={args.seeds}  methods={len(METHODS)}")
-    print(f"  output: {OUTPUT_ROOT}/")
+    print(f"  output: {OUTPUT_ROOT}/{BENCH}/")
     print("=" * 60)
 
-    cfg = make_fast_track_config(device=args.device)
+    cfg = make_fast_track_config(bench=BENCH, epochs_per_task=EPOCHS_PER_TASK, device=args.device)
 
     # --- Run jobs ---
     print("\n--- Running jobs ---")
-    all_results = run_all_jobs(cfg, args.seeds)
+    all_results = run_all_jobs(cfg, args.seeds, bench=BENCH, methods=METHODS)
 
     # --- Analysis ---
     print("\n--- Analysis ---")
@@ -454,12 +473,15 @@ def main():
 
     # --- Save outputs ---
     print("\n--- Saving outputs ---")
-    csv_path = os.path.join(OUTPUT_ROOT, "summary.csv")
+    csv_path = os.path.join(OUTPUT_ROOT, BENCH, "summary.csv") if BENCH != "perm_mnist" \
+               else os.path.join(OUTPUT_ROOT, "summary.csv")
     save_csv(rows, csv_path)
 
-    save_results_md(rows, q1_text, q3_text, "RESULTS.md")
+    results_md = f"RESULTS_{BENCH}.md" if BENCH != "perm_mnist" else "RESULTS.md"
+    save_results_md(rows, q1_text, q3_text, results_md)
 
-    plot_dir = os.path.join(OUTPUT_ROOT, "plots")
+    plot_dir = os.path.join(OUTPUT_ROOT, BENCH, "plots") if BENCH != "perm_mnist" \
+               else os.path.join(OUTPUT_ROOT, "plots")
     make_plots(all_results, rows, args.seeds, plot_dir)
 
     # --- Print summary table ---
