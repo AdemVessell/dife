@@ -56,15 +56,21 @@ _Higher is better; 0 = no replay._
 
 ---
 
-## Table 3 — split_cifar (Partial)
+## Table 3 — split_cifar Fast-Track
 
-**1/27 jobs complete** as of snapshot date.
+5 tasks · **3 epochs/task** · 2 seeds · buffer_capacity=2000
+Methods: FT, ConstReplay_0.1/0.3, DIFE_only, MV_only, DIFE_MV
 
-| Method | Seed | AA | AF | Replay |
-|--------|------|----|----|--------|
-| FT                 | seed_0 | 0.711 | 0.268 |          0 |
+| Method | AA ↑ | AF ↓ | BWT | FWT | Replay Budget | Efficiency |
+|--------|------|------|-----|-----|---------------|------------|
+| FT                 | 0.695 ± 0.006 | 0.275 ± 0.006 | -0.275 ± 0.006 | 0.093 ± 0.002 |            0 ±      0 | 0.0000 |
+| ConstReplay_0.1    | 0.789 ± 0.003 | 0.156 ± 0.002 | -0.156 ± 0.002 | 0.120 ± 0.003 |       11,376 ±      0 | 0.1046 |
+| ConstReplay_0.3    | 0.825 ± 0.009 | 0.102 ± 0.013 | -0.102 ± 0.013 | 0.139 ± 0.007 |       36,024 ±      0 | 0.0481 |
+| DIFE_only          | 0.853 ± 0.007 | 0.060 ± 0.004 | -0.060 ± 0.004 | 0.130 ± 0.004 |      108,664 ±  1,540 | 0.0198 |
+| MV_only            | 0.846 ± 0.002 | 0.061 ± 0.001 | -0.059 ± 0.001 | 0.120 ± 0.001 |       97,170 ±      0 | 0.0221 |
+| DIFE_MV            | 0.846 ± 0.000 | 0.071 ± 0.000 | -0.071 ± 0.000 | 0.122 ± 0.004 |       86,031 ±    711 | 0.0237 |
 
-_Do not draw conclusions from partial data. See RESUME.md to continue this run._
+_Pareto criteria: PRIMARY (DIFE_only AF ≤ CR_0.1 AF) ✅ PASS. SECONDARY (replay budget) ❌ FAIL — β prior calibration needed. See HARD_BENCH_PLAN.md for full analysis._
 
 ---
 

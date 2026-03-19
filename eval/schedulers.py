@@ -13,10 +13,24 @@ class SchedulerState:
     dife_fitter: object
     mv_fitter: object
     rng: np.random.Generator
+    r_max: Optional[float] = None  # governor cap (used by sweep runs)
 
 
 def get_replay_fraction(method: str, state: SchedulerState) -> float:
-    """Dispatch to the correct r_t scheduler. Returns float in [0, 1]."""
+    """Return the task-level replay fraction r_t for this method.
+
+    For MV-based methods (MV_only, DIFE_MV), this is the *task-level* baseline.
+    Per-epoch modulation happens in the trainer's epoch loop when mv_fitter.has_fit
+    is True — not here. The scheduler only handles task-level planning.
+
+    DIFE_MV design:
+      - Task level: DIFE envelope sets the budget (no MV multiplication here)
+      - Epoch level (trainer): r_epoch = DIFE(t) × MV_operator(global_epoch)
+      This separation fixes two bugs from the old multiplicative formula:
+        1. Cold-start deficit: old code multiplied by MV_fallback(0.81) even before
+           MV had any data, cutting early-task replay by 19% vs DIFE_only.
+        2. Never per-epoch: MV never modulated within a task; now it does.
+    """
     t = state.task_index
 
     if method == "FT":
@@ -36,8 +50,11 @@ def get_replay_fraction(method: str, state: SchedulerState) -> float:
     elif method == "MV_only":
         return state.mv_fitter.replay_fraction(state.total_epochs_so_far)
     elif method == "DIFE_MV":
-        d = state.dife_fitter.replay_fraction(t)
-        m = state.mv_fitter.replay_fraction(state.total_epochs_so_far)
-        return float(np.clip(d * m, 0.0, 1.0))
+        # Task-level: pure DIFE envelope.
+        # Per-epoch MV modulation is applied in the trainer loop.
+        return state.dife_fitter.replay_fraction(t)
+    elif method == "DIFE_flatMatched":
+        # Budget is injected externally per task; r_t is overridden in trainer.
+        return 0.0
     else:
         raise ValueError(f"Unknown method: {method}")

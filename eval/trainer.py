@@ -44,8 +44,21 @@ def train_one_method(
     seed: int,
     best_ewc_lam: float,
     best_si_c: float,
+    r_max: float = None,
+    gamma: float = 1.0,
+    injected_task_budgets: list = None,
 ) -> dict:
     """Train model sequentially through all tasks with the given method.
+
+    For MV-based methods (MV_only, DIFE_MV), replay is modulated per-epoch
+    once the MV operator has been fitted (mv_fitter.has_fit is True).
+
+    Per-epoch MV modulation:
+      - DIFE sets the task-level envelope: r_dife = DIFE(task_index)
+      - Each epoch, MV predicts: r_mv = MV_operator(global_epoch)
+      - DIFE_MV per-epoch rate: r_epoch = r_dife × r_mv
+      - MV_only per-epoch rate: r_epoch = r_mv
+      - Before MV fits (cold-start): falls back to task-level r_t
 
     Returns dict with:
         acc_matrix, r_t_history, total_replay_samples, wall_clock_seconds,
@@ -68,11 +81,15 @@ def train_one_method(
     # Online fitter setup
     dife_fitter = OnlineDIFEFitter() if method in ("DIFE_only", "DIFE_MV") else None
     mv_fitter = OnlineMVFitter() if method in ("MV_only", "DIFE_MV") else None
+    # DIFE_flatMatched uses replay buffer but no online fitters (injected budgets)
+    if method == "DIFE_flatMatched":
+        uses_replay = True
 
     acc_matrix = []
     r_t_history = []
     pre_task_acc = []
     total_replay_samples = 0
+    replay_per_task = []
     mv_proxy_history = []
     dife_params_history = []
     global_epoch = 0
@@ -85,29 +102,59 @@ def train_one_method(
             pre_acc = evaluate(model, test_t)
             pre_task_acc.append(pre_acc)
 
-        # Determine r_t BEFORE training this task (uses fitted params from t-1)
+        # Determine task-level r_t BEFORE training (uses fitted params from t-1)
         state = SchedulerState(
             task_index=t,
             total_epochs_so_far=global_epoch,
             dife_fitter=dife_fitter,
             mv_fitter=mv_fitter,
             rng=rng,
+            r_max=r_max,
         )
         r_t = get_replay_fraction(method, state)
+        if r_max is not None:
+            r_t = float(np.clip(gamma * r_t, 0.0, r_max))
         r_t_history.append(r_t)
+
+        # Task-level replay count (fallback when MV hasn't fit yet)
         n_replay_per_batch = int(r_t * train_loader.batch_size)
+
+        # DIFE_flatMatched: override with injected flat per-batch count
+        if method == "DIFE_flatMatched" and injected_task_budgets is not None and t < len(injected_task_budgets):
+            n_batches = len(train_loader)
+            denom = max(n_batches * cfg.epochs_per_task, 1)
+            n_replay_per_batch = injected_task_budgets[t] // denom
+
+        _task_replay = 0
+
+        # Per-epoch MV modulation is active once the operator has been fitted.
+        # Before that, we use the task-level n_replay_per_batch as the fallback.
+        uses_per_epoch_mv = (mv_fitter is not None and mv_fitter.has_fit)
 
         # Training epochs
         for epoch_local in range(cfg.epochs_per_task):
             model.train()
 
+            # Per-epoch replay rate: MV modulates within the task
+            if uses_per_epoch_mv:
+                r_mv = mv_fitter.replay_fraction(global_epoch)
+                if method == "DIFE_MV" and dife_fitter is not None:
+                    # Scale MV signal by the DIFE task-level envelope
+                    r_mv = r_mv * dife_fitter.replay_fraction(t)
+                if r_max is not None:
+                    r_mv = float(np.clip(gamma * r_mv, 0.0, r_max))
+                n_replay_this_epoch = int(r_mv * train_loader.batch_size)
+            else:
+                n_replay_this_epoch = n_replay_per_batch
+
             for x_real, y_real in train_loader:
                 # Mix in replay samples
-                if uses_replay and buffer.size() > 0 and n_replay_per_batch > 0:
-                    x_rep, y_rep = buffer.sample(n_replay_per_batch)
+                if uses_replay and buffer.size() > 0 and n_replay_this_epoch > 0:
+                    x_rep, y_rep = buffer.sample(n_replay_this_epoch)
                     x_all = torch.cat([x_real, x_rep], dim=0)
                     y_all = torch.cat([y_real, y_rep], dim=0)
                     total_replay_samples += len(x_rep)
+                    _task_replay += len(x_rep)
                 else:
                     x_all, y_all = x_real, y_real
 
@@ -133,6 +180,10 @@ def train_one_method(
                 mv_proxy_history.append(proxy)
                 mv_fitter.record_epoch(global_epoch, proxy)
 
+                # Update per-epoch flag: might become True mid-task after enough obs
+                # (only affects subsequent epochs in this task)
+                uses_per_epoch_mv = mv_fitter.has_fit
+
             global_epoch += 1
 
         # Post-task: regularizer consolidation
@@ -151,6 +202,7 @@ def train_one_method(
         for j, (_, test_loader) in enumerate(task_loaders[: t + 1]):
             row.append(evaluate(model, test_loader))
         acc_matrix.append(row)
+        replay_per_task.append(_task_replay)
         print(f"  [{method}] task {t+1}: {[f'{a:.3f}' for a in row]}")
 
         # Post-task: update online fitters (causal — uses only rows seen so far)
@@ -166,6 +218,7 @@ def train_one_method(
         "r_t_history": r_t_history,
         "pre_task_acc": pre_task_acc,
         "total_replay_samples": total_replay_samples,
+        "replay_per_task": replay_per_task,
         "wall_clock_seconds": time.time() - t0,
         "mv_proxy_history": mv_proxy_history,
         "dife_params_history": dife_params_history,
