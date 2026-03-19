@@ -38,14 +38,16 @@ def get_replay_fraction(method: str, state: SchedulerState) -> float:
         return state.mv_fitter.replay_fraction(state.total_epochs_so_far)
     elif method == "DIFE_MV":
         d = state.dife_fitter.replay_fraction(t)
-        m = state.mv_fitter.replay_fraction(state.total_epochs_so_far)
-        # Budget-aware blend: at tight budgets (r_max <= 0.10) MV is disabled
-        # to prevent it from reducing replay below what DIFE alone would give.
+        # Budget-aware blend: at tight budgets (r_max <= 0.10) skip MV entirely
+        # so DIFE_MV = DIFE_only exactly (no RNG divergence from proxy eval).
         # lambda ramps from 0 at r_max=0.10 to 1.0 at r_max=0.20.
         if state.r_max is not None:
             lam = float(np.clip((state.r_max - 0.10) / 0.10, 0.0, 1.0))
         else:
             lam = 1.0
+        if lam == 0.0:
+            return d  # pure DIFE, no MV call (preserves RNG state)
+        m = state.mv_fitter.replay_fraction(state.total_epochs_so_far)
         raw = d * ((1.0 - lam) + lam * m)
         return float(np.clip(raw, 0.0, 1.0))
     else:

@@ -6,8 +6,12 @@ Benchmark: Permuted-MNIST  |  Seeds: 3  |  Tasks: 5  |  Epochs/task: 3
 
 | Method | AA ↑ | AF ↓ | BWT ↑ | FWT | Replay Budget | Efficiency* |
 |--------|------|------|-------|-----|--------------|-------------|
-| DIFE_only          | 0.821±0.006 | 0.114±0.005 | -0.114±0.005 | 0.125±0.005 | 23,700±0 | 0.0000 |
-| DIFE_MV            | 0.819±0.005 | 0.110±0.006 | -0.110±0.006 | 0.133±0.002 | 23,700±0 | 0.0000 |
+| FT                 | 0.704±0.010 | 0.266±0.010 | -0.266±0.010 | 0.096±0.006 | 0±0 | 0.0000 |
+| ConstReplay_0.1    | 0.792±0.004 | 0.151±0.005 | -0.151±0.005 | 0.120±0.009 | 11,376±0 | 0.1012 |
+| ConstReplay_0.3    | 0.824±0.006 | 0.103±0.009 | -0.103±0.009 | 0.137±0.011 | 36,024±0 | 0.0454 |
+| DIFE_only          | 0.833±0.011 | 0.092±0.013 | -0.092±0.013 | 0.118±0.012 | 36,024±0 | 0.0484 |
+| MV_only            | 0.835±0.005 | 0.093±0.002 | -0.093±0.002 | 0.136±0.011 | 36,024±0 | 0.0482 |
+| DIFE_MV            | 0.834±0.001 | 0.097±0.002 | -0.097±0.002 | 0.127±0.009 | 36,024±0 | 0.0471 |
 
 \* Efficiency = AF improvement per 10,000 replay samples vs FT baseline.
   Higher is better; 0 = no replay (FT).
@@ -29,16 +33,16 @@ alpha and beta fitted online (causal) per task:
 Method: DIFE_only
   t=1    0.9000       0.0000      0.010000   0.000000
   t=2    0.9000       0.0000      0.010000   0.000000
-  t=3    0.9463       0.0056      0.000000   0.000000
-  t=4    0.9308       0.0029      0.000000   0.000000
-  t=5    0.9452       0.0031      0.000000   0.000000
+  t=3    0.9710       0.0052      0.000000   0.000000
+  t=4    0.9509       0.0041      0.000000   0.000000
+  t=5    0.9591       0.0045      0.000000   0.000000
 
 Method: DIFE_MV
   t=1    0.9000       0.0000      0.010000   0.000000
   t=2    0.9000       0.0000      0.010000   0.000000
-  t=3    0.9569       0.0062      0.000000   0.000000
-  t=4    0.9361       0.0057      0.000000   0.000000
-  t=5    0.9477       0.0020      0.000000   0.000000
+  t=3    0.9564       0.0116      0.000000   0.000001
+  t=4    0.9459       0.0008      0.000000   0.000000
+  t=5    0.9553       0.0006      0.000000   0.000000
 
 ---
 
@@ -46,11 +50,16 @@ Method: DIFE_MV
 
 proxy = 1 - accuracy_on_buffer (computed per epoch)
 
+Method: MV_only
+  seed=0: 12 epochs recorded, non-zero values: 12, max=0.2600, mean=0.1537
+  seed=1: 12 epochs recorded, non-zero values: 12, max=0.3000, mean=0.1629
+  seed=2: 12 epochs recorded, non-zero values: 12, max=0.2950, mean=0.1575
+  seed=3: 12 epochs recorded, non-zero values: 12, max=0.2300, mean=0.1342
 Method: DIFE_MV
-  seed=4: 12 epochs recorded, non-zero values: 12, max=0.3100, mean=0.1792
-  seed=5: 12 epochs recorded, non-zero values: 12, max=0.2400, mean=0.1650
-  seed=6: 12 epochs recorded, non-zero values: 12, max=0.3300, mean=0.2067
-  seed=7: 12 epochs recorded, non-zero values: 12, max=0.3050, mean=0.1763
+  seed=0: 12 epochs recorded, non-zero values: 12, max=0.2350, mean=0.1462
+  seed=1: 12 epochs recorded, non-zero values: 12, max=0.2800, mean=0.1458
+  seed=2: 12 epochs recorded, non-zero values: 12, max=0.2000, mean=0.1417
+  seed=3: 12 epochs recorded, non-zero values: 12, max=0.2650, mean=0.1558
 
 Note: With 3 epochs/task on perm_mnist, buffer accuracy stays near 1.0
 throughout training (low intra-task forgetting), so proxy ≈ 0 across all epochs.
