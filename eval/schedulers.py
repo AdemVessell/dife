@@ -13,6 +13,7 @@ class SchedulerState:
     dife_fitter: object
     mv_fitter: object
     rng: np.random.Generator
+    r_max: Optional[float] = None  # governor cap; used for budget-aware MV blend
 
 
 def get_replay_fraction(method: str, state: SchedulerState) -> float:
@@ -38,6 +39,14 @@ def get_replay_fraction(method: str, state: SchedulerState) -> float:
     elif method == "DIFE_MV":
         d = state.dife_fitter.replay_fraction(t)
         m = state.mv_fitter.replay_fraction(state.total_epochs_so_far)
-        return float(np.clip(d * m, 0.0, 1.0))
+        # Budget-aware blend: at tight budgets (r_max <= 0.10) MV is disabled
+        # to prevent it from reducing replay below what DIFE alone would give.
+        # lambda ramps from 0 at r_max=0.10 to 1.0 at r_max=0.20.
+        if state.r_max is not None:
+            lam = float(np.clip((state.r_max - 0.10) / 0.10, 0.0, 1.0))
+        else:
+            lam = 1.0
+        raw = d * ((1.0 - lam) + lam * m)
+        return float(np.clip(raw, 0.0, 1.0))
     else:
         raise ValueError(f"Unknown method: {method}")

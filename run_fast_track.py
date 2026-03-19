@@ -461,7 +461,32 @@ def main():
                         help="Scale factor applied before r_max cap (default 1.0).")
     parser.add_argument("--output-root", default=OUTPUT_ROOT, dest="output_root",
                         help="Override output root dir (useful for sweep isolation).")
+    parser.add_argument("--budget-samples", type=int, default=None, dest="budget_samples",
+                        help="Target total replay sample budget (e.g. 23700). "
+                             "Converted to r_max via r_max = budget / max_possible_replay. "
+                             "Overrides --r-max if both are set.")
     args = parser.parse_args()
+
+    # --budget-samples: derive r_max from sample target.
+    # max_possible_replay = batch_size * n_tasks * epochs_per_task * typical_n_batches
+    # We approximate using split_cifar numbers: 5000 train samples / batch_size=64 ~ 79 batches/epoch.
+    # For perm_mnist: 60000/64 ~ 938.  The formula is: r_max = budget / (bs * n_batches * E * T_replay)
+    # where T_replay = n_tasks-1 (task 0 has empty buffer, no replay).
+    # We compute it lazily from the bench config after args are parsed.
+    if args.budget_samples is not None:
+        from eval.config import make_bench_config as _mcfg
+        _cfg_tmp = _mcfg(args.bench)
+        _bs = _cfg_tmp.batch_size
+        _n_tasks = _cfg_tmp.n_tasks
+        _ept = args.epochs_per_task
+        # Estimate n_batches per epoch from dataset size (train split)
+        # split_cifar: 5 tasks × 1000 samples each / batch_size=64 → ~16 batches/task-epoch
+        # perm_mnist: 60000 / batch_size=256 → ~235 batches/epoch
+        _approx_batches = {"split_cifar": 16, "perm_mnist": 235}.get(args.bench, 50)
+        _max_replay = _bs * _approx_batches * _ept * (_n_tasks - 1)
+        args.r_max = float(args.budget_samples) / float(_max_replay)
+        print(f"  --budget-samples={args.budget_samples}: derived r_max={args.r_max:.4f} "
+              f"(bs={_bs}, ~{_approx_batches} batches/ep, {_ept} ep/task, {_n_tasks-1} tasks w/ replay)")
 
     # Update module-level vars so helper functions pick them up
     global METHODS, BENCH, EPOCHS_PER_TASK

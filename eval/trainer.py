@@ -94,6 +94,7 @@ def train_one_method(
             dife_fitter=dife_fitter,
             mv_fitter=mv_fitter,
             rng=rng,
+            r_max=r_max,
         )
         r_t = get_replay_fraction(method, state)
         if r_max is not None:
