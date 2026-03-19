@@ -1,0 +1,58 @@
+{
+  "avg_final_acc": 0.6834,
+  "avg_forgetting": 0.29125,
+  "bwt": -0.29125,
+  "fwt": 0.09912499999999999,
+  "total_replay_samples": 0,
+  "wall_clock_seconds": 104.9996964931488,
+  "acc_matrix": [
+    [
+      0.9495
+    ],
+    [
+      0.6815,
+      0.823
+    ],
+    [
+      0.655,
+      0.674,
+      0.9135
+    ],
+    [
+      0.326,
+      0.515,
+      0.6485,
+      0.951
+    ],
+    [
+      0.7515,
+      0.603,
+      0.536,
+      0.5815,
+      0.945
+    ]
+  ],
+  "r_t_history": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ],
+  "mv_proxy_history": [],
+  "dife_params_history": [],
+  "pre_task_acc": [
+    0.597,
+    0.709,
+    0.556,
+    0.5345
+  ],
+  "canonical_config": {
+    "bench": "split_cifar",
+    "r_max": 0.3,
+    "epochs_per_task": 3,
+    "seed": 4,
+    "method": "FT",
+    "code_branch": "canonical/audit-rebuild"
+  }
+}
