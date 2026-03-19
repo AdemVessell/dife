@@ -82,7 +82,7 @@ class OnlineMVFitter:
     def record_epoch(self, global_epoch: int, proxy_value: float) -> None:
         """Record one proxy observation (called after each training epoch)."""
         self._epoch_steps.append(global_epoch)
-        self._y_proxy.append(float(np.clip(proxy_value, 0.0, 1.0)))
+        self._y_proxy.append(float(np.clip(np.nan_to_num(proxy_value, nan=0.0), 0.0, 1.0)))
         self._total_epochs = global_epoch + 1
 
     def update(self):
@@ -111,4 +111,4 @@ class OnlineMVFitter:
 
     def replay_fraction(self, global_epoch: int) -> float:
         """Return replay fraction from current operator at this global epoch."""
-        return float(self._operator(global_epoch))
+        return float(np.clip(np.nan_to_num(self._operator(global_epoch), nan=0.0), 0.0, 1.0))

@@ -55,10 +55,11 @@ EPOCHS_PER_TASK = DEFAULT_EPOCHS_PER_TASK
 # Config
 # ---------------------------------------------------------------------------
 
-def make_fast_track_config(bench: str, epochs_per_task: int, device: str = "cpu"):
+def make_fast_track_config(bench: str, epochs_per_task: int, device: str = "cpu",
+                           output_root: str = OUTPUT_ROOT):
     cfg = make_bench_config(bench, device=device)
     cfg.epochs_per_task = epochs_per_task
-    cfg.output_dir = OUTPUT_ROOT
+    cfg.output_dir = output_root
     return cfg
 
 
@@ -66,7 +67,8 @@ def make_fast_track_config(bench: str, epochs_per_task: int, device: str = "cpu"
 # Run jobs
 # ---------------------------------------------------------------------------
 
-def run_all_jobs(cfg, seeds: list, bench: str, methods: list) -> dict:
+def run_all_jobs(cfg, seeds: list, bench: str, methods: list,
+                 r_max: float = None, gamma: float = 1.0) -> dict:
     """Run all method x seed jobs, skipping completed ones.
 
     Returns nested dict: {method: {seed: metrics_dict}}
@@ -103,6 +105,8 @@ def run_all_jobs(cfg, seeds: list, bench: str, methods: list) -> dict:
                 seed=seed,
                 best_ewc_lam=best_ewc_lam,
                 best_si_c=best_si_c,
+                r_max=r_max,
+                gamma=gamma,
             )
 
             metrics = compute_all_metrics(
@@ -142,6 +146,8 @@ def run_all_jobs(cfg, seeds: list, bench: str, methods: list) -> dict:
 
 def compute_efficiency(all_results: dict, seeds: list) -> dict:
     """AF improvement per 10k replay samples (0 for FT/no-replay methods)."""
+    if "FT" not in all_results:
+        return {m: 0.0 for m in all_results}
     ft_af = np.mean([all_results["FT"][s]["avg_forgetting"] for s in seeds])
     efficiency = {}
     for method in METHODS:
@@ -186,6 +192,8 @@ def analyze_q1_dife_stability(all_results: dict, seeds: list) -> str:
     lines.append("-" * 56)
 
     for method in ("DIFE_only", "DIFE_MV"):
+        if method not in all_results:
+            continue
         lines.append(f"\nMethod: {method}")
         # Collect per-task params across seeds
         n_tasks = 5
@@ -216,6 +224,8 @@ def analyze_q3_proxy_correlation(all_results: dict, seeds: list) -> str:
     lines.append("proxy = 1 - accuracy_on_buffer (computed per epoch)\n")
 
     for method in ("MV_only", "DIFE_MV"):
+        if method not in all_results:
+            continue
         lines.append(f"Method: {method}")
         for s in seeds:
             data = all_results[method][s]
@@ -411,6 +421,8 @@ def make_plots(all_results: dict, rows: list, seeds: list, plot_dir: str):
 
     # Bottom: mv_proxy_history per epoch for MV_only and DIFE_MV
     for method in ("MV_only", "DIFE_MV"):
+        if method not in all_results:
+            continue
         proxy = all_results[method][seed].get("mv_proxy_history", [])
         if proxy:
             ax_bot.plot(range(len(proxy)), proxy, label=method, linewidth=1.5)
@@ -443,6 +455,12 @@ def main():
                         dest="epochs_per_task")
     parser.add_argument("--methods", nargs="+", default=DEFAULT_METHODS,
                         choices=ALL_METHODS, metavar="METHOD")
+    parser.add_argument("--r-max", type=float, default=None, dest="r_max",
+                        help="Cap on replay fraction for DIFE/MV (e.g. 0.10). None = no cap.")
+    parser.add_argument("--gamma", type=float, default=1.0,
+                        help="Scale factor applied before r_max cap (default 1.0).")
+    parser.add_argument("--output-root", default=OUTPUT_ROOT, dest="output_root",
+                        help="Override output root dir (useful for sweep isolation).")
     args = parser.parse_args()
 
     # Update module-level vars so helper functions pick them up
@@ -455,14 +473,19 @@ def main():
     print("DIFE x MV Fast-Track Evaluation (Colossus-2)")
     print(f"  bench={BENCH}  epochs/task={EPOCHS_PER_TASK}  "
           f"seeds={args.seeds}  methods={len(METHODS)}")
-    print(f"  output: {OUTPUT_ROOT}/{BENCH}/")
+    print(f"  output: {args.output_root}/{BENCH}/")
     print("=" * 60)
 
-    cfg = make_fast_track_config(bench=BENCH, epochs_per_task=EPOCHS_PER_TASK, device=args.device)
+    cfg = make_fast_track_config(bench=BENCH, epochs_per_task=EPOCHS_PER_TASK,
+                                 device=args.device, output_root=args.output_root)
+
+    if args.r_max is not None:
+        print(f"  replay governor: r_max={args.r_max}  gamma={args.gamma}")
 
     # --- Run jobs ---
     print("\n--- Running jobs ---")
-    all_results = run_all_jobs(cfg, args.seeds, bench=BENCH, methods=METHODS)
+    all_results = run_all_jobs(cfg, args.seeds, bench=BENCH, methods=METHODS,
+                               r_max=args.r_max, gamma=args.gamma)
 
     # --- Analysis ---
     print("\n--- Analysis ---")
@@ -473,15 +496,19 @@ def main():
 
     # --- Save outputs ---
     print("\n--- Saving outputs ---")
-    csv_path = os.path.join(OUTPUT_ROOT, BENCH, "summary.csv") if BENCH != "perm_mnist" \
-               else os.path.join(OUTPUT_ROOT, "summary.csv")
+    out_root = args.output_root
+    csv_path = os.path.join(out_root, BENCH, "summary.csv") if BENCH != "perm_mnist" \
+               else os.path.join(out_root, "summary.csv")
     save_csv(rows, csv_path)
 
-    results_md = f"RESULTS_{BENCH}.md" if BENCH != "perm_mnist" else "RESULTS.md"
+    results_md_dir = os.path.join(out_root, BENCH) if BENCH != "perm_mnist" else out_root
+    os.makedirs(results_md_dir, exist_ok=True)
+    results_md = os.path.join(results_md_dir, f"RESULTS_{BENCH}.md") if BENCH != "perm_mnist" \
+                 else os.path.join(results_md_dir, "RESULTS.md")
     save_results_md(rows, q1_text, q3_text, results_md)
 
-    plot_dir = os.path.join(OUTPUT_ROOT, BENCH, "plots") if BENCH != "perm_mnist" \
-               else os.path.join(OUTPUT_ROOT, "plots")
+    plot_dir = os.path.join(out_root, BENCH, "plots") if BENCH != "perm_mnist" \
+               else os.path.join(out_root, "plots")
     make_plots(all_results, rows, args.seeds, plot_dir)
 
     # --- Print summary table ---
@@ -501,7 +528,7 @@ def main():
 
     print(f"\nOutputs:")
     print(f"  CSV:      {csv_path}")
-    print(f"  Markdown: RESULTS.md")
+    print(f"  Markdown: {results_md}")
     print(f"  Plots:    {plot_dir}/")
     print(f"\nDone.")
 

@@ -44,6 +44,8 @@ def train_one_method(
     seed: int,
     best_ewc_lam: float,
     best_si_c: float,
+    r_max: float = None,
+    gamma: float = 1.0,
 ) -> dict:
     """Train model sequentially through all tasks with the given method.
 
@@ -94,6 +96,8 @@ def train_one_method(
             rng=rng,
         )
         r_t = get_replay_fraction(method, state)
+        if r_max is not None:
+            r_t = float(np.clip(gamma * r_t, 0.0, r_max))
         r_t_history.append(r_t)
         n_replay_per_batch = int(r_t * train_loader.batch_size)
 
