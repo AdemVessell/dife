@@ -96,6 +96,7 @@ def run_all_jobs(cfg, seeds: list, bench: str, methods: list,
                 continue
 
             print(f"\n[{done}/{total}] run   {method}  seed={seed}")
+            torch.manual_seed(seed)  # re-seed before model init so all methods get identical weights
             model = _fresh_model(bench)
             result = train_one_method(
                 method=method,
