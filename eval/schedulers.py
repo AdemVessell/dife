@@ -53,5 +53,8 @@ def get_replay_fraction(method: str, state: SchedulerState) -> float:
         # Task-level: pure DIFE envelope.
         # Per-epoch MV modulation is applied in the trainer loop.
         return state.dife_fitter.replay_fraction(t)
+    elif method == "DIFE_flatMatched":
+        # Budget is injected externally per task; r_t is overridden in trainer.
+        return 0.0
     else:
         raise ValueError(f"Unknown method: {method}")

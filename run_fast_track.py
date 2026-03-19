@@ -123,6 +123,7 @@ def run_all_jobs(cfg, seeds: list, bench: str, methods: list,
             metrics["mv_proxy_history"] = result["mv_proxy_history"]
             metrics["dife_params_history"] = result["dife_params_history"]
             metrics["pre_task_acc"] = result.get("pre_task_acc", [])
+            metrics["replay_per_task"] = result.get("replay_per_task", [])
 
             save_metrics(metrics, out_path)
             all_results[method][seed] = metrics
