@@ -236,28 +236,36 @@ class TestOnlineDIFEFitter:
 
 class TestOnlineMVFitter:
     def test_fallback_below_min_obs(self):
-        from dife.controller import MemoryVortexOperator
-
         f = OnlineMVFitter()
-        fallback_coef = MemoryVortexOperator.fallback().coef_raw.copy()
-        for i in range(14):
+        fallback_val = f.replay_fraction(0)
+        # MIN_OBS = 6; record MIN_OBS-1 = 5 observations → should still use fallback
+        for i in range(OnlineMVFitter.MIN_OBS - 1):
             f.record_epoch(i, 0.3 + 0.01 * i)
-        op = f.update()
-        # Should return unchanged fallback
-        np.testing.assert_array_almost_equal(op.coef_raw, fallback_coef)
+        f.update()
+        # Should remain on fallback and has_fit should be False
+        assert not f.has_fit
+        assert f.replay_fraction(0) == pytest.approx(fallback_val)
 
-    def test_fits_at_15_obs(self):
-        from dife.controller import MemoryVortexOperator
-
+    def test_fits_at_min_obs(self):
         f = OnlineMVFitter()
-        fallback_coef = MemoryVortexOperator.fallback().coef_raw.copy()
-        for i in range(15):
+        # Record exactly MIN_OBS observations → should fit
+        for i in range(OnlineMVFitter.MIN_OBS):
             f.record_epoch(i, 0.5 + 0.02 * np.sin(i))
         op = f.update()
-        # After fitting, operator should differ from fallback
-        # (not guaranteed in all corner cases, but with 15 diverse obs should change)
         assert op is not None
         assert hasattr(op, "coef_raw")
+        assert f.has_fit
+
+    def test_has_fit_false_before_fitting(self):
+        f = OnlineMVFitter()
+        assert not f.has_fit
+
+    def test_has_fit_true_after_fitting(self):
+        f = OnlineMVFitter()
+        for i in range(OnlineMVFitter.MIN_OBS):
+            f.record_epoch(i, 0.1 + 0.05 * i)
+        f.update()
+        assert f.has_fit
 
     def test_record_epoch_accumulates(self):
         f = OnlineMVFitter()
@@ -330,12 +338,11 @@ class TestSchedulers:
         )
         assert r == pytest.approx(expected)
 
-    def test_dife_mv_is_product_clipped(self, scheduler_state):
+    def test_dife_mv_returns_pure_dife(self, scheduler_state):
+        """DIFE_MV task-level r_t is pure DIFE; MV modulation is per-epoch in trainer."""
         r = get_replay_fraction("DIFE_MV", scheduler_state)
         d = scheduler_state.dife_fitter.replay_fraction(scheduler_state.task_index)
-        m = scheduler_state.mv_fitter.replay_fraction(scheduler_state.total_epochs_so_far)
-        expected = float(np.clip(d * m, 0.0, 1.0))
-        assert r == pytest.approx(expected)
+        assert r == pytest.approx(d)
 
     def test_unknown_method_raises(self, scheduler_state):
         with pytest.raises(ValueError, match="Unknown method"):
