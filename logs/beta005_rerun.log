@@ -15,3 +15,63 @@
 [split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
   [FT] task 1: ['0.950']
   [FT] task 2: ['0.681', '0.823']
+[patch] OnlineDIFEFitter.BETA_BOUNDS = (0.05, 1.0)
+[skip] seed=0 method=FT — already done
+  Progress: 1/30  elapsed=0s
+[skip] seed=1 method=FT — already done
+  Progress: 2/30  elapsed=0s
+[skip] seed=2 method=FT — already done
+  Progress: 3/30  elapsed=0s
+[skip] seed=3 method=FT — already done
+  Progress: 4/30  elapsed=0s
+
+============================================================
+  BETA-RERUN: seed=4 method=FT beta_min=0.05
+  bench=split_cifar  epochs/task=3  r_max=0.3
+============================================================
+[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
+[patch] OnlineDIFEFitter.BETA_BOUNDS = (0.05, 1.0)
+[skip] seed=0 method=FT — already done
+  Progress: 1/30  elapsed=0s
+[skip] seed=1 method=FT — already done
+  Progress: 2/30  elapsed=0s
+[skip] seed=2 method=FT — already done
+  Progress: 3/30  elapsed=0s
+[skip] seed=3 method=FT — already done
+  Progress: 4/30  elapsed=0s
+
+============================================================
+  BETA-RERUN: seed=4 method=FT beta_min=0.05
+  bench=split_cifar  epochs/task=3  r_max=0.3
+============================================================
+[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
+[patch] OnlineDIFEFitter.BETA_BOUNDS = (0.05, 1.0)
+[skip] seed=0 method=FT — already done
+  Progress: 1/30  elapsed=0s
+[skip] seed=1 method=FT — already done
+  Progress: 2/30  elapsed=0s
+[skip] seed=2 method=FT — already done
+  Progress: 3/30  elapsed=0s
+[skip] seed=3 method=FT — already done
+  Progress: 4/30  elapsed=0s
+
+============================================================
+  BETA-RERUN: seed=4 method=FT beta_min=0.05
+  bench=split_cifar  epochs/task=3  r_max=0.3
+============================================================
+[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
+[patch] OnlineDIFEFitter.BETA_BOUNDS = (0.05, 1.0)
+[skip] seed=0 method=FT — already done
+  Progress: 1/30  elapsed=0s
+[skip] seed=1 method=FT — already done
+  Progress: 2/30  elapsed=0s
+[skip] seed=2 method=FT — already done
+  Progress: 3/30  elapsed=0s
+[skip] seed=3 method=FT — already done
+  Progress: 4/30  elapsed=0s
+
+============================================================
+  BETA-RERUN: seed=4 method=FT beta_min=0.05
+  bench=split_cifar  epochs/task=3  r_max=0.3
+============================================================
+[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
