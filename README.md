@@ -12,6 +12,18 @@
 
 ---
 
+## Project Status
+
+> **DIFE is currently best supported as an offline forgetting model and scheduler signal.** It reliably fits α/β from post-task accuracy histories and produces budget-proportional replay allocations. Its behavior as a true *online* adaptive controller in budget-capped runs is still under investigation.
+>
+> **Memory Vortex (MV) shows possible online epoch-shaping value** on split-CIFAR at r_max ≥ 0.30, but this is not yet confirmed robust across seeds and configurations.
+>
+> **A canonical beta-bound rerun (6 methods × 5 seeds) is now in progress** to determine whether DIFE fires as a genuine online adaptive controller in capped split-CIFAR runs. Results pending.
+>
+> For detailed nuances and open questions, see [CAVEATS.md](CAVEATS.md).
+
+---
+
 ## What This Is
 
 Neural networks forget. When you train a model on a new task, it damages what it learned on previous tasks — this is called **catastrophic forgetting**, and it's one of the core unsolved problems in AI.
@@ -266,15 +278,15 @@ dife/
 
 ## What's Next
 
-All four Pareto criteria pass on budget-equalized split-CIFAR. **DIFE_MV is the validated combined controller.**
+All four Pareto criteria pass on budget-equalized split-CIFAR. These results are encouraging but should be treated as preliminary pending the canonical rerun described in [Project Status](#project-status).
 
-### Current Status
+### Current Results (Preliminary)
 
 The r_max=0.30 sweep (4 seeds, identical budget across all methods) shows:
 
-- **DIFE_MV beats ConstReplay_0.3 on forgetting** at equal replay cost (AF 0.083 vs 0.097)
+- **DIFE_MV shows lower forgetting than ConstReplay_0.3** at equal replay cost (AF 0.083 vs 0.097)
 - **DIFE_only is roughly on par** with ConstReplay_0.3 at equal budget (AF 0.106 vs 0.097)
-- **MV adds measurable value over DIFE_only alone** when budget is sufficient (ΔAF = −0.023 at r_max=0.30)
+- **MV appears to add value over DIFE_only** when budget is sufficient (ΔAF = −0.023 at r_max=0.30) — not yet confirmed robust across seeds
 
 The earlier lean benchmark result (DIFE_only AF=0.060) was real but came from an uncapped run using 3× the baseline's budget — not a fair comparison. The sweep at r_max=0.30 is the correct equalized test.
 
@@ -282,13 +294,13 @@ The earlier lean benchmark result (DIFE_only AF=0.060) was real but came from an
 
 1. **β prior calibration**: On split-CIFAR, the fitted β converges near zero (β ≈ 8.9e-7 by task 5). This causes DIFE to over-allocate replay globally rather than concentrating budget on volatile tasks. Raising β_init from 0.01 to ~0.05 is expected to sharpen task-level budget allocation without changing the r_max cap behavior.
 
-2. **MV epoch scheduling on harder benchmarks**: The MV operator's crossover (ΔAF > 0 only at r_max ≥ 0.30) suggests it needs sufficient budget headroom to show gains. Tighter budgets (r_max ≤ 0.20) show MV neutralized by the λ-blend formula — correct behavior, but the crossover threshold could be lowered with better basis weights fit to split-CIFAR proxy dynamics.
+2. **MV epoch scheduling on harder benchmarks**: An apparent crossover (ΔAF > 0 only at r_max ≥ 0.30) suggests MV needs sufficient budget headroom, but this threshold is not yet rigorously confirmed. Tighter budgets (r_max ≤ 0.20) show MV neutralized by the λ-blend formula — likely correct behavior, but the crossover point and its robustness remain open questions.
 
 3. **Harder benchmarks**: Split-CIFAR with 5 epochs/task and a broader task suite would stress-test both components more thoroughly. The 3-epoch lean setup limits intra-task signal for MV.
 
-DIFE handles task-level budget allocation. MV handles epoch-level scheduling within each task. Both components produce real signals. The architecture is validated — further work is calibration, not redesign.
+DIFE handles task-level budget allocation. MV handles epoch-level scheduling within each task. Both components produce measurable signals, though online behavior in budget-capped runs requires further confirmation before strong claims about the combined controller.
 
-See `HARD_BENCH_PLAN.md` and `SUMMARY_SWEEP.md` for full diagnostics.
+See [CAVEATS.md](CAVEATS.md) for detailed open engineering questions, `HARD_BENCH_PLAN.md`, and `SUMMARY_SWEEP.md` for full diagnostics.
 
 ---
 
