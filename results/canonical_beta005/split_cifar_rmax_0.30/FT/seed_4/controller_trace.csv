@@ -1,0 +1,7 @@
+seed,method,task_id,epoch_in_task,global_epoch,alpha_fit,beta_fit,dife_envelope_value,mv_proxy_value,mv_operator_value,final_replay_fraction_before_cap,final_replay_fraction_after_cap,replay_samples_this_epoch,cumulative_replay_samples,has_mv_fit,r_max,gamma
+4,FT,0,0,0,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+4,FT,0,1,1,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+4,FT,0,2,2,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+4,FT,1,0,3,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+4,FT,1,1,4,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+4,FT,1,2,5,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
