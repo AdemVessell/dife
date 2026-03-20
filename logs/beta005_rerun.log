@@ -30,3 +30,12 @@
   [ConstReplay_0.1] task 2: ['0.878', '0.822']
   [ConstReplay_0.1] task 3: ['0.852', '0.740', '0.891']
   [ConstReplay_0.1] task 4: ['0.686', '0.587', '0.689', '0.959']
+  [ConstReplay_0.1] task 5: ['0.820', '0.697', '0.693', '0.770', '0.957']
+[done] seed=0 method=ConstReplay_0.1 AA=0.787 AF=0.159 replay=11,376
+  Progress: 6/30  elapsed=1914s
+
+============================================================
+  BETA-RERUN: seed=1 method=ConstReplay_0.1 beta_min=0.05
+  bench=split_cifar  epochs/task=3  r_max=0.3
+============================================================
+[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
