@@ -7,3 +7,26 @@
   bench=split_cifar  epochs/task=3  r_max=0.3
 ============================================================
 [split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
+  [ConstReplay_0.1] task 1: ['0.946']
+  [ConstReplay_0.1] task 2: ['0.856', '0.836']
+  [ConstReplay_0.1] task 3: ['0.798', '0.724', '0.890']
+  [ConstReplay_0.1] task 4: ['0.706', '0.612', '0.714', '0.958']
+  [ConstReplay_0.1] task 5: ['0.831', '0.625', '0.712', '0.791', '0.942']
+[done] seed=3 method=ConstReplay_0.1 AA=0.780 AF=0.167 replay=11,376
+  Progress: 1/1  elapsed=151s
+
+All 1 jobs attempted in 151.3s
+Results: /home/user/dife/results/canonical_beta005/split_cifar_rmax_0.30
+[Sat Mar 21 08:34:11 UTC 2026] [1/50] END   beta=0.05 method=ConstReplay_0.1 seed=3 exit=0
+[Sat Mar 21 08:34:11 UTC 2026] [2/50] START beta=0.05 method=ConstReplay_0.1 seed=4
+[patch] OnlineDIFEFitter.BETA_BOUNDS = (0.05, 1.0)
+
+============================================================
+  BETA-RERUN: seed=4 method=ConstReplay_0.1 beta_min=0.05
+  bench=split_cifar  epochs/task=3  r_max=0.3
+============================================================
+[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
+  [ConstReplay_0.1] task 1: ['0.950']
+  [ConstReplay_0.1] task 2: ['0.818', '0.809']
+  [ConstReplay_0.1] task 3: ['0.889', '0.741', '0.894']
+  [ConstReplay_0.1] task 4: ['0.704', '0.625', '0.691', '0.962']

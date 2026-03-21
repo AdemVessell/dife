@@ -1,0 +1,59 @@
+{
+  "avg_final_acc": 0.7802,
+  "avg_forgetting": 0.16737500000000002,
+  "bwt": -0.16737500000000002,
+  "fwt": 0.127875,
+  "total_replay_samples": 11376,
+  "wall_clock_seconds": 126.62019371986389,
+  "acc_matrix": [
+    [
+      0.9455
+    ],
+    [
+      0.856,
+      0.836
+    ],
+    [
+      0.798,
+      0.724,
+      0.89
+    ],
+    [
+      0.706,
+      0.6115,
+      0.714,
+      0.9575
+    ],
+    [
+      0.8305,
+      0.6255,
+      0.712,
+      0.7915,
+      0.9415
+    ]
+  ],
+  "r_t_history": [
+    0.1,
+    0.1,
+    0.1,
+    0.1,
+    0.1
+  ],
+  "mv_proxy_history": [],
+  "dife_params_history": [],
+  "pre_task_acc": [
+    0.6155,
+    0.6795,
+    0.5065,
+    0.71
+  ],
+  "canonical_config": {
+    "bench": "split_cifar",
+    "r_max": 0.3,
+    "epochs_per_task": 3,
+    "seed": 3,
+    "method": "ConstReplay_0.1",
+    "beta_min": 0.05,
+    "code_branch": "canonical/beta-bound-rerun"
+  }
+}
