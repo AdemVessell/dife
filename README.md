@@ -1,5 +1,6 @@
-<img width="1532" height="866" alt="DIFE chart" src="https://github.com/user-attachments/assets/892a3de2-bf02-4a3e-8b1d-effd1ca2ec5a" />
-<img width="1532" height="866" alt="DIFE chart comp" src="https://github.com/user-attachments/assets/45e26d62-61af-4d6d-ae6b-29ccb935a118" />
+
+<img width="2376" height="1326" alt="readme_controller_trace_dark" src="https://github.com/user-attach<img width="2676" height="1147" alt="readme_split_cifar_beta010_panel_dark" src="https://github.com/user-attachments/assets/0db91a71-a1e8-4cd3-bcae-4fbfed5fbcfe" />
+ments/assets/4a4f8e3f-d1ab-4fda-b333-0635b52c51dd" />
 
 # DIFE × Memory Vortex
 
