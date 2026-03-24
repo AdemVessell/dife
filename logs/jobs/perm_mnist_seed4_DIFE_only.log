@@ -1,7 +1,0 @@
-[perm_mnist] Loaded cached grid search params: EWC lambda=5000.0, SI c=0.01
-  [DIFE_only] task 1: ['0.976']
-  [DIFE_only] task 2: ['0.972', '0.976']
-  [DIFE_only] task 3: ['0.967', '0.967', '0.975']
-  [DIFE_only] task 4: ['0.961', '0.960', '0.967', '0.974']
-  [DIFE_only] task 5: ['0.951', '0.956', '0.963', '0.968', '0.977']
-[done] perm_mnist seed=4 method=DIFE_only AA=0.963 AF=0.016
