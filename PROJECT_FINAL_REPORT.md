@@ -15,7 +15,9 @@ DIFE × Memory Vortex is a novel adaptive replay controller for continual learni
 1. **DIFE (Decay-Interference Forgetting Equation)** — a closed-form model of catastrophic forgetting: `Q_n = max(0, Q_0 · α^n − β · n · (1 − α^n))`
 2. **Memory Vortex (MV)** — a symbolic operator that shapes per-epoch replay schedules using buffer accuracy drift as a proxy signal
 
-The system has been **fully validated** through a comprehensive beta-bound rerun experiment (6 methods × 5 seeds × 2 beta conditions = 60 jobs, 0 failures). DIFE_MV is confirmed as a genuine adaptive replay controller that fires below the budget cap, saving 9–10% of replay budget while matching or improving accuracy compared to fixed-rate baselines.
+The **combined DIFE_MV system** has been validated as an adaptive replay controller through a comprehensive beta-bound rerun experiment (6 methods × 5 seeds × 2 beta conditions = 60 jobs, 0 failures). DIFE_MV fires below the budget cap in 10/10 seeds, saving 9–10% of replay budget while matching or improving accuracy compared to fixed-rate baselines.
+
+**Important distinction:** MV is the live adaptive engine driving below-cap modulation at the epoch level. DIFE contributes a task-level planning envelope and fit signal, but DIFE alone still saturates the cap in the capped split-CIFAR setting even after the beta-bound fix. The adaptive controller claim therefore applies to the combined system, not to DIFE as a standalone online controller.
 
 ---
 
@@ -103,20 +105,22 @@ DIFE provides the task-level envelope (how much total replay budget for each tas
 
 ## 4. Key Findings
 
-### 4.1 DIFE_MV Is a Confirmed Adaptive Controller
+### 4.1 DIFE_MV (Combined System) Is a Confirmed Adaptive Controller
 
-The controller traces prove that DIFE_MV genuinely modulates replay below the budget cap:
+The **controller traces** — not `r_t_history`, which is task-level planning only — prove that the combined DIFE_MV system genuinely modulates replay below the budget cap at the epoch level:
 
 - **10/10 seeds** across both beta conditions fire below r_max=0.30
 - Replay fraction drops to **0.157** on low-forgetting tasks (task 3)
 - Replay fraction ramps back to **0.300** (cap) on high-forgetting tasks (task 4)
 - Average replay savings: **3,350–3,600 samples** (9–10% of budget)
 
-### 4.2 MV Drives the Adaptation
+### 4.2 MV Drives the Adaptation; DIFE Provides the Envelope
 
-- **DIFE_only:** 5/5 seeds always at cap (36,024 replay) — it's a passthrough to ConstReplay_0.3
-- **MV_only:** 4/5 seeds below cap — MV adapts independently
-- **DIFE_MV:** 5/5 seeds below cap — the combination is the most consistently adaptive
+- **DIFE_only:** 5/5 seeds always at cap (36,024 replay) even after the beta-bound fix — DIFE alone is not a below-cap online controller in the capped split-CIFAR setting
+- **MV_only:** 4/5 seeds below cap — MV adapts independently via epoch-level proxy signal
+- **DIFE_MV:** 5/5 seeds below cap — the combination is the most consistently adaptive; DIFE's task-level envelope stabilises and complements MV's epoch-level modulation
+
+**Metric note:** `r_t_history` in published JSON artifacts shows `[0.3, 0.3, 0.3, 0.3, 0.3]` even for DIFE_MV, because that field records task-level planning targets. The actual sub-cap adaptation is visible only in the `controller_trace.csv` files, where epoch-level replay fractions drop to ~0.126–0.171 on low-forgetting tasks.
 
 ### 4.3 Beta Floor Resolves the Convergence Issue
 
@@ -165,7 +169,6 @@ dife/
 │   ├── canonical_beta010/          # β_min=0.10, 6 methods × 5 seeds
 │   ├── perm_mnist/                 # 9 methods × 5 seeds
 │   ├── sweep/                      # r_max sweep results
-│   └── fast_track/                 # Quick validation runs
 ├── scripts/                        # Analysis and inspection tools
 ├── tests/                          # Test suite
 ├── docs/
@@ -221,22 +224,24 @@ dife/
 | **Reproducibility** | 8.0/10 | All seeds, configs, and results saved as JSON. Grid search params cached. Controller traces provide full audit trail. |
 
 ### Strengths
-- **Scientific honesty** — The project doesn't overclaim. When DIFE alone was found to saturate the cap, this was documented rather than hidden. The progression from cautious to confirmed claims is well-evidenced.
-- **Mechanistic evidence** — Controller traces showing replay fractions dropping to 0.157 then ramping back to 0.300 are more convincing than aggregate metrics alone.
-- **Novel equation** — The DIFE forgetting model with its interference term fits real forgetting curves well (RMSE 0.030–0.045).
+- **Scientific honesty** — DIFE_only saturation is documented, not hidden. CAVEATS.md and docs/CANONICAL_VERDICT.md give a harder assessment than the README. The controller trace is presented as the real proof artifact, with an explicit note that `r_t_history` can mislead.
+- **Mechanistic evidence** — Controller traces showing epoch replay fractions dropping to ~0.126–0.171 then ramping back to 0.300 are more convincing than aggregate metrics alone.
+- **Novel equation** — The DIFE forgetting model with its linear interference term fits real forgetting curves well (RMSE 0.030–0.045).
 - **Complete experiment** — 257 metrics files across multiple benchmarks, seeds, and conditions.
 
 ### Limitations
+- **DIFE alone is not yet adaptive in this setting** — DIFE_only saturates the cap on split-CIFAR even after the beta-bound fix. The project's adaptive controller claim rests on the combined DIFE_MV system, with MV as the live engine.
 - **Modest effect sizes** — The DIFE_MV advantage over ConstReplay_0.3 (ΔAF ≈ 0.01–0.02) is real but small. A skeptical reviewer could argue this is within noise for some configurations.
 - **Two benchmarks only** — Split-CIFAR and perm_mnist are standard but small. Larger-scale validation (CIFAR-100 splits, TinyImageNet) would strengthen claims significantly.
-- **MV does the heavy lifting** — DIFE alone saturates the cap. The adaptive behavior comes from MV's epoch-level signal, which raises the question of whether DIFE's task-level envelope is adding value beyond being a budget passthrough.
 - **β_min is a hyperparameter** — The need for a beta floor (β_min=0.05–0.10) means the system requires calibration. This is acknowledged but somewhat undermines the "fits in real time" narrative.
 
 ### Verdict
 
-This is a **solid research project** that demonstrates a genuine adaptive replay controller. The core claim — that DIFE_MV modulates replay below the budget cap while maintaining accuracy — is supported by 10/10 seeds across two beta conditions with mechanistic controller trace evidence. The project maintains scientific honesty throughout, with clear documentation of limitations.
+This is a **solid research project** that demonstrates a genuine adaptive replay controller in the combined DIFE_MV system. The core claim — that **DIFE_MV as a system** modulates replay below the budget cap while maintaining accuracy — is supported by 10/10 seeds across two beta conditions with mechanistic controller trace evidence.
 
-It's above the threshold for a workshop paper or strong course project. With harder benchmarks and larger-scale validation, it could be a competitive conference submission.
+The strongest defensible single statement is: *MV is the live adaptive engine; DIFE contributes a task-level planning envelope and fit signal that complements but does not independently drive the adaptive behaviour observed in the split-CIFAR setting.* The project is honest about this throughout CAVEATS.md and docs/CANONICAL_VERDICT.md.
+
+It's above the threshold for a workshop paper or strong course project. With harder benchmarks, a demonstrated below-cap DIFE-alone result, and larger-scale validation, it could be a competitive conference submission.
 
 ---
 
@@ -251,7 +256,7 @@ It's above the threshold for a workshop paper or strong course project. With har
 | — | Honest documentation overhaul (CAVEATS.md, RED_TEAM) |
 | — | Beta convergence issue identified |
 | Mar 24, 2026 | **Beta-bound rerun complete** (49/49 jobs, 0 failures) |
-| Mar 24, 2026 | **DIFE_MV confirmed as adaptive controller** |
+| Mar 24, 2026 | **DIFE_MV (combined system) confirmed as adaptive controller** |
 | Mar 24, 2026 | README + CAVEATS updated, results pushed |
 
 ---
