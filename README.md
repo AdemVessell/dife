@@ -1,5 +1,4 @@
-
-src="https://github.com/user-attach<img width="2676" height="1147" alt="readme_split_cifar_beta010_panel_dark" src="https://github.com/user-attachments/assets/0db91a71-a1e8-4cd3-bcae-4fbfed5fbcfe" />
+<img width="2676" height="1147" alt="readme_split_cifar_beta010_panel_dark" src="https://github.com/user-attachments/assets/0db91a71-a1e8-4cd3-bcae-4fbfed5fbcfe" />
 ments/assets/4a4f8e3f-d1ab-4fda-b333-0635b52c51dd" />
 
 # DIFE × Memory Vortex
