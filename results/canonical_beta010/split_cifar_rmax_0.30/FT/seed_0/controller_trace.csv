@@ -1,0 +1,16 @@
+seed,method,task_id,epoch_in_task,global_epoch,alpha_fit,beta_fit,dife_envelope_value,mv_proxy_value,mv_operator_value,final_replay_fraction_before_cap,final_replay_fraction_after_cap,replay_samples_this_epoch,cumulative_replay_samples,has_mv_fit,r_max,gamma
+0,FT,0,0,0,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,0,1,1,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,0,2,2,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,1,0,3,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,1,1,4,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,1,2,5,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,2,0,6,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,2,1,7,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,2,2,8,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,3,0,9,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,3,1,10,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,3,2,11,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,4,0,12,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,4,1,13,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0
+0,FT,4,2,14,nan,nan,nan,nan,nan,0.000000,0.000000,0,0,0,0.3,1.0

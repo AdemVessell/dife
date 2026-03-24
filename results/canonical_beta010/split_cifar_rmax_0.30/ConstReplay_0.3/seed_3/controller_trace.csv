@@ -1,0 +1,16 @@
+seed,method,task_id,epoch_in_task,global_epoch,alpha_fit,beta_fit,dife_envelope_value,mv_proxy_value,mv_operator_value,final_replay_fraction_before_cap,final_replay_fraction_after_cap,replay_samples_this_epoch,cumulative_replay_samples,has_mv_fit,r_max,gamma
+3,ConstReplay_0.3,0,0,0,nan,nan,nan,nan,nan,0.300000,0.300000,0,0,0,0.3,1.0
+3,ConstReplay_0.3,0,1,1,nan,nan,nan,nan,nan,0.300000,0.300000,0,0,0,0.3,1.0
+3,ConstReplay_0.3,0,2,2,nan,nan,nan,nan,nan,0.300000,0.300000,0,0,0,0.3,1.0
+3,ConstReplay_0.3,1,0,3,nan,nan,nan,nan,nan,0.300000,0.300000,3002,3002,0,0.3,1.0
+3,ConstReplay_0.3,1,1,4,nan,nan,nan,nan,nan,0.300000,0.300000,3002,6004,0,0.3,1.0
+3,ConstReplay_0.3,1,2,5,nan,nan,nan,nan,nan,0.300000,0.300000,3002,9006,0,0.3,1.0
+3,ConstReplay_0.3,2,0,6,nan,nan,nan,nan,nan,0.300000,0.300000,3002,12008,0,0.3,1.0
+3,ConstReplay_0.3,2,1,7,nan,nan,nan,nan,nan,0.300000,0.300000,3002,15010,0,0.3,1.0
+3,ConstReplay_0.3,2,2,8,nan,nan,nan,nan,nan,0.300000,0.300000,3002,18012,0,0.3,1.0
+3,ConstReplay_0.3,3,0,9,nan,nan,nan,nan,nan,0.300000,0.300000,3002,21014,0,0.3,1.0
+3,ConstReplay_0.3,3,1,10,nan,nan,nan,nan,nan,0.300000,0.300000,3002,24016,0,0.3,1.0
+3,ConstReplay_0.3,3,2,11,nan,nan,nan,nan,nan,0.300000,0.300000,3002,27018,0,0.3,1.0
+3,ConstReplay_0.3,4,0,12,nan,nan,nan,nan,nan,0.300000,0.300000,3002,30020,0,0.3,1.0
+3,ConstReplay_0.3,4,1,13,nan,nan,nan,nan,nan,0.300000,0.300000,3002,33022,0,0.3,1.0
+3,ConstReplay_0.3,4,2,14,nan,nan,nan,nan,nan,0.300000,0.300000,3002,36024,0,0.3,1.0

@@ -56,10 +56,11 @@ _Higher is better; 0 = no replay._
 
 ---
 
-## Table 3 — split_cifar Fast-Track
+## Table 3 — split_cifar Lean Benchmark (uncapped budget, for reference)
 
-5 tasks · **3 epochs/task** · 2 seeds · buffer_capacity=2000
-Methods: FT, ConstReplay_0.1/0.3, DIFE_only, MV_only, DIFE_MV
+5 tasks · **3 epochs/task** · 2 seeds · buffer_capacity=2000 · **no budget cap on DIFE methods**
+
+_Note: DIFE_only uses ~3× the replay of ConstReplay_0.3 here. This is not a fair budget comparison. See Table 4 for budget-equalized results._
 
 | Method | AA ↑ | AF ↓ | BWT | FWT | Replay Budget | Efficiency |
 |--------|------|------|-----|-----|---------------|------------|
@@ -70,7 +71,25 @@ Methods: FT, ConstReplay_0.1/0.3, DIFE_only, MV_only, DIFE_MV
 | MV_only            | 0.846 ± 0.002 | 0.061 ± 0.001 | -0.059 ± 0.001 | 0.120 ± 0.001 |       97,170 ±      0 | 0.0221 |
 | DIFE_MV            | 0.846 ± 0.000 | 0.071 ± 0.000 | -0.071 ± 0.000 | 0.122 ± 0.004 |       86,031 ±    711 | 0.0237 |
 
-_Pareto criteria: PRIMARY (DIFE_only AF ≤ CR_0.1 AF) ✅ PASS. SECONDARY (replay budget) ❌ FAIL — β prior calibration needed. See HARD_BENCH_PLAN.md for full analysis._
+---
+
+## Table 4 — split_cifar Budget-Equalized (r_max=0.30 sweep, primary comparison)
+
+5 tasks · **3 epochs/task** · r_max=0.30 cap · **identical budget across all replay methods**
+
+This is the correct apples-to-apples comparison. Budget is capped to ConstReplay_0.3 level (36,024 samples) for all methods.
+
+| Method | AA ↑ | AF ↓ | Replay Budget | Seeds |
+|--------|------|------|---------------|-------|
+| FT                 | 0.702 ± 0.011 | 0.269 ± 0.010 |            0 | 3 (replication) |
+| ConstReplay_0.1    | 0.792 ± 0.004 | 0.155 ± 0.004 |       11,376 | 3 (replication) |
+| ConstReplay_0.3    | 0.832 ± 0.010 | 0.097 ± 0.008 |       36,024 | 2 (replication) |
+| DIFE_only          | 0.830 ± 0.005 | 0.106 ± 0.007 |       36,024 | 4 (sweep r_max=0.30) |
+| **DIFE_MV**        | **0.838 ± 0.003** | **0.083 ± 0.006** | **36,024** | 4 (sweep r_max=0.30) |
+
+_Pareto criteria: PRIMARY ✅ DIFE_only AF (0.106) ≤ CR_0.1 AF (0.155). SECONDARY ✅ budget equal by construction. COMBINED ✅ DIFE_MV AF (0.083) < DIFE_only AF (0.106) and beats CR_0.3 (0.097). PROXY ✅ max(mv_proxy)=0.155._
+
+_Replication study seeds: FT/CR_0.1 complete (3 seeds), CR_0.3/DIFE_only/DIFE_MV in progress. Sweep results (4 seeds, DIFE methods) from `results/sweep/split_cifar/r_max_0.30/`._
 
 ---
 

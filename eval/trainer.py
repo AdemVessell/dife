@@ -2,6 +2,7 @@
 
 import sys
 import os
+import csv
 import time
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "memory-vortex-dife-lab"))
@@ -16,6 +17,17 @@ from benchmark.baselines import EWC, SI, evaluate
 from eval.buffer import ReservoirBuffer
 from eval.online_fitters import OnlineDIFEFitter, OnlineMVFitter
 from eval.schedulers import get_replay_fraction, SchedulerState
+
+# Controller trace CSV field names (written once per epoch per task)
+_TRACE_FIELDS = [
+    "seed", "method", "task_id", "epoch_in_task", "global_epoch",
+    "alpha_fit", "beta_fit",
+    "dife_envelope_value",
+    "mv_proxy_value", "mv_operator_value",
+    "final_replay_fraction_before_cap", "final_replay_fraction_after_cap",
+    "replay_samples_this_epoch", "cumulative_replay_samples",
+    "has_mv_fit", "r_max", "gamma",
+]
 
 # Methods that use regularization instead of replay
 REGULARIZER_METHODS = {"FT", "EWC", "SI"}
@@ -47,6 +59,7 @@ def train_one_method(
     r_max: float = None,
     gamma: float = 1.0,
     injected_task_budgets: list = None,
+    trace_path: str = None,
 ) -> dict:
     """Train model sequentially through all tasks with the given method.
 
@@ -66,6 +79,15 @@ def train_one_method(
     """
     t0 = time.time()
     rng = np.random.default_rng(seed)
+
+    # Open controller trace file if requested
+    _trace_file = None
+    _trace_writer = None
+    if trace_path is not None:
+        os.makedirs(os.path.dirname(trace_path), exist_ok=True)
+        _trace_file = open(trace_path, "w", newline="")
+        _trace_writer = csv.DictWriter(_trace_file, fieldnames=_TRACE_FIELDS)
+        _trace_writer.writeheader()
     loss_fn = nn.CrossEntropyLoss()
     optimizer = Adam(model.parameters(), lr=cfg.lr)
 
@@ -135,18 +157,38 @@ def train_one_method(
         for epoch_local in range(cfg.epochs_per_task):
             model.train()
 
+            # Compute trace values before deciding replay rate
+            _alpha_fit = dife_fitter.alpha if dife_fitter is not None else float("nan")
+            _beta_fit = dife_fitter.beta if dife_fitter is not None else float("nan")
+            _dife_envelope = (
+                float(np.clip(dife_fitter.replay_fraction(t), 0.0, 1.0))
+                if dife_fitter is not None else float("nan")
+            )
+            _mv_op_val = (
+                float(mv_fitter._operator(global_epoch))
+                if mv_fitter is not None else float("nan")
+            )
+
             # Per-epoch replay rate: MV modulates within the task
             if uses_per_epoch_mv:
                 r_mv = mv_fitter.replay_fraction(global_epoch)
+                _mv_op_val = float(mv_fitter._operator(global_epoch))
                 if method == "DIFE_MV" and dife_fitter is not None:
                     # Scale MV signal by the DIFE task-level envelope
-                    r_mv = r_mv * dife_fitter.replay_fraction(t)
+                    _before_cap = r_mv * _dife_envelope
+                    r_mv = _before_cap
+                else:
+                    _before_cap = r_mv
                 if r_max is not None:
                     r_mv = float(np.clip(gamma * r_mv, 0.0, r_max))
                 n_replay_this_epoch = int(r_mv * train_loader.batch_size)
+                _after_cap = r_mv
             else:
+                _before_cap = float(r_t) if method not in REGULARIZER_METHODS else 0.0
+                _after_cap = float(r_t) if method not in REGULARIZER_METHODS else 0.0
                 n_replay_this_epoch = n_replay_per_batch
 
+            _epoch_replay_start = total_replay_samples
             for x_real, y_real in train_loader:
                 # Mix in replay samples
                 if uses_replay and buffer.size() > 0 and n_replay_this_epoch > 0:
@@ -174,15 +216,40 @@ def train_one_method(
 
                 optimizer.step()
 
+            _epoch_replay_count = total_replay_samples - _epoch_replay_start
+
             # After each epoch: record MV proxy if applicable
+            _proxy_val = float("nan")
             if mv_fitter is not None and buffer.size() > 0:
-                proxy = _compute_mv_proxy(model, buffer, cfg.mv_proxy_eval_samples)
-                mv_proxy_history.append(proxy)
-                mv_fitter.record_epoch(global_epoch, proxy)
+                _proxy_val = _compute_mv_proxy(model, buffer, cfg.mv_proxy_eval_samples)
+                mv_proxy_history.append(_proxy_val)
+                mv_fitter.record_epoch(global_epoch, _proxy_val)
 
                 # Update per-epoch flag: might become True mid-task after enough obs
                 # (only affects subsequent epochs in this task)
                 uses_per_epoch_mv = mv_fitter.has_fit
+
+            # Write controller trace row
+            if _trace_writer is not None:
+                _trace_writer.writerow({
+                    "seed": seed,
+                    "method": method,
+                    "task_id": t,
+                    "epoch_in_task": epoch_local,
+                    "global_epoch": global_epoch,
+                    "alpha_fit": f"{_alpha_fit:.6f}" if not np.isnan(_alpha_fit) else "nan",
+                    "beta_fit": f"{_beta_fit:.8e}" if not np.isnan(_beta_fit) else "nan",
+                    "dife_envelope_value": f"{_dife_envelope:.6f}" if not np.isnan(_dife_envelope) else "nan",
+                    "mv_proxy_value": f"{_proxy_val:.6f}" if not np.isnan(_proxy_val) else "nan",
+                    "mv_operator_value": f"{_mv_op_val:.6f}" if not np.isnan(_mv_op_val) else "nan",
+                    "final_replay_fraction_before_cap": f"{_before_cap:.6f}",
+                    "final_replay_fraction_after_cap": f"{_after_cap:.6f}",
+                    "replay_samples_this_epoch": _epoch_replay_count,
+                    "cumulative_replay_samples": total_replay_samples,
+                    "has_mv_fit": int(mv_fitter.has_fit) if mv_fitter is not None else 0,
+                    "r_max": r_max if r_max is not None else "nan",
+                    "gamma": gamma,
+                })
 
             global_epoch += 1
 
@@ -212,6 +279,9 @@ def train_one_method(
 
         if mv_fitter is not None:
             mv_fitter.update()
+
+    if _trace_file is not None:
+        _trace_file.close()
 
     return {
         "acc_matrix": acc_matrix,
