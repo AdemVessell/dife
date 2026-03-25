@@ -4,7 +4,7 @@
   "bwt": -0.150125,
   "fwt": 0.12299999999999997,
   "total_replay_samples": 11376,
-  "wall_clock_seconds": 147.1690866947174,
+  "wall_clock_seconds": 77.43832635879517,
   "acc_matrix": [
     [
       0.9455

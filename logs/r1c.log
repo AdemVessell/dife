@@ -1,9 +1,0 @@
-[patch] OnlineDIFEFitter.BETA_BOUNDS = (0.05, 1.0)
-
-============================================================
-  BETA-RERUN: seed=0 method=ConstReplay_0.3 beta_min=0.05
-  bench=split_cifar  epochs/task=3  r_max=0.3
-============================================================
-[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
-  [ConstReplay_0.3] task 1: ['0.943']
-  [ConstReplay_0.3] task 2: ['0.895', '0.822']
