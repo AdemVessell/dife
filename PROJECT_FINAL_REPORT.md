@@ -92,7 +92,21 @@ DIFE provides the task-level envelope (how much total replay budget for each tas
 
 **Note:** On perm_mnist, DIFE_only outperforms DIFE_MV. MV's epoch-level proxy signal is less useful on this simpler benchmark where forgetting dynamics are more uniform across epochs.
 
-### 3.5 Cross-Beta DIFE_MV Comparison
+### 3.5 Independent Replication (March 25, 2026)
+
+An independent replication run was conducted on split-CIFAR-10 using 5 fresh seeds (different from canonical seeds) to confirm reproducibility. Results are consistent with the canonical run (section 3.1):
+
+| Method | AA (↑) | ± | AF (↓) | ± | Replay | ± |
+|---|---|---|---|---|---|---|
+| FT | 0.700 | 0.013 | 0.271 | 0.013 | 0 | 0 |
+| ConstReplay_0.1 | 0.787 | 0.007 | 0.160 | 0.006 | 11,376 | 0 |
+| ConstReplay_0.3 | 0.829 | 0.008 | 0.102 | 0.010 | 36,024 | 0 |
+| DIFE_only | 0.831 | 0.004 | 0.101 | 0.005 | 36,024 | 0 |
+| **DIFE_MV** | **0.829** | **0.010** | **0.099** | **0.008** | **33,148** | **580** |
+
+**Replication verdict:** All values match the canonical run within error bars. DIFE_MV continues to save ~8% of replay budget (2,876 samples) with equal or better forgetting vs DIFE_only. Sanity checks: 4/4 automated checks pass (AF=−BWT, budget accounting, r_t range, accuracy range). Full report: `RESULTS_REPLICATION.md`.
+
+### 3.6 Cross-Beta DIFE_MV Comparison
 
 | Condition | AA | AF | Replay | Cap Hits |
 |---|---|---|---|---|
@@ -137,13 +151,14 @@ Without a beta floor, fitted β converges to ~8.9e-7 by task 5, causing DIFE to 
 
 | Metric | Count |
 |---|---|
-| Total metrics.json files | 257 |
+| Total metrics.json files | 251 |
 | Split-CIFAR canonical runs | 30 (6 methods × 5 seeds) |
 | Beta-bound rerun (β_min=0.05) | 30 (6 methods × 5 seeds) |
 | Beta-bound rerun (β_min=0.10) | 30 (6 methods × 5 seeds) |
 | Perm-MNIST runs | 45 (9 methods × 5 seeds) |
 | Sweep configurations | 5 r_max values × multiple seeds |
-| Total experiment jobs completed | 257+ |
+| Replication study (Mar 25, 2026) | 25 (5 methods × 5 seeds) |
+| Total experiment jobs completed | 276+ |
 | Beta-bound rerun failure rate | **0/49** (0%) |
 
 ---
@@ -169,6 +184,7 @@ dife/
 │   ├── canonical_beta010/          # β_min=0.10, 6 methods × 5 seeds
 │   ├── perm_mnist/                 # 9 methods × 5 seeds
 │   ├── sweep/                      # r_max sweep results
+│   └── replication_study/          # Independent replication (5 seeds, Mar 25 2026)
 ├── scripts/                        # Analysis and inspection tools
 ├── tests/                          # Test suite
 ├── docs/
@@ -221,7 +237,7 @@ dife/
 | **Results** | 7.5/10 | DIFE_MV consistently wins on split-CIFAR (the harder benchmark). The 9–10% replay savings with matched/improved accuracy is real but modest. Effect sizes are small — standard deviations sometimes approach the mean differences. |
 | **Code Quality** | 7.5/10 | Clean separation of concerns (equation, fitter, controller, evaluation). Well-structured results hierarchy. Multiple runner scripts reflect iterative development. |
 | **Documentation** | 8.5/10 | Exceptionally honest. CAVEATS.md, RED_TEAM_CONCLUSION, and the progression from "under investigation" to "confirmed" demonstrate scientific integrity. |
-| **Reproducibility** | 8.0/10 | All seeds, configs, and results saved as JSON. Grid search params cached. Controller traces provide full audit trail. |
+| **Reproducibility** | 8.5/10 | All seeds, configs, and results saved as JSON. Grid search params cached. Controller traces provide full audit trail. Independent replication (5 fresh seeds, Mar 25 2026) confirms all canonical results within error bars. |
 
 ### Strengths
 - **Scientific honesty** — DIFE_only saturation is documented, not hidden. CAVEATS.md and docs/CANONICAL_VERDICT.md give a harder assessment than the README. The controller trace is presented as the real proof artifact, with an explicit note that `r_t_history` can mislead.
@@ -258,7 +274,9 @@ It's above the threshold for a workshop paper or strong course project. With har
 | Mar 24, 2026 | **Beta-bound rerun complete** (49/49 jobs, 0 failures) |
 | Mar 24, 2026 | **DIFE_MV (combined system) confirmed as adaptive controller** |
 | Mar 24, 2026 | README + CAVEATS updated, results pushed |
+| Mar 25, 2026 | **Independent replication complete** (5 fresh seeds, split-CIFAR-10) |
+| Mar 25, 2026 | Replication confirms all canonical results; 4/4 sanity checks pass |
 
 ---
 
-*Generated March 24, 2026. Repository: github.com/AdemVessell/dife*
+*Last updated March 25, 2026 (replication study added). Repository: github.com/AdemVessell/dife*
