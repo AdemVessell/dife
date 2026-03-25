@@ -132,10 +132,11 @@ class GCADiscoveryEngineV1:
                 float(coef_raw[i]) * self._basis_sympy[i]
                 for i in range(len(coef_raw))
             )
-            simplified = sp.simplify(expr)
+            # Skip sp.simplify() — it can hang indefinitely on certain coefficient
+            # combinations; the unsimplified form is functionally equivalent.
             result["symbolic"] = {
-                "latex":  sp.latex(simplified),
-                "sympy":  str(simplified),
+                "latex":  sp.latex(expr),
+                "sympy":  str(expr),
             }
 
         return result
