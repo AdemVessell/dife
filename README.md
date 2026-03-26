@@ -1,28 +1,24 @@
-<img width="2676" height="1147" alt="readme_split_cifar_beta010_panel_dark" src="https://github.com/user-attachments/assets/0db91a71-a1e8-4cd3-bcae-4fbfed5fbcfe" />
-ments/assets/4a4f8e3f-d1ab-4fda-b333-0635b52c51dd" />
-
 # DIFE × Memory Vortex
 
 **Decay-Interference Forgetting Equation + Adaptive Replay Controller**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
+[![Tests](https://github.com/AdemVessell/dife/actions/workflows/tests.yml/badge.svg)](https://github.com/AdemVessell/dife/actions/workflows/tests.yml)
 
 > Created by **Adem Vessell**
 
 ---
 
-## Project Status
-
-> **DIFE × Memory Vortex is a confirmed adaptive replay controller.** The beta-bound rerun (6 methods × 5 seeds × 2 beta conditions) is complete. Key findings:
->
-> - **DIFE_MV fires below the replay budget cap in 10/10 seeds** (both β_min=0.05 and β_min=0.10), using ~9–10% less replay than the fixed-budget baseline while matching or improving accuracy.
-> - **Best result (β_min=0.10):** AA=0.837±0.007, AF=0.093±0.009, replay=32,422 vs ConstReplay_0.3's 36,024 — higher accuracy, lower forgetting, less replay.
-> - **Memory Vortex drives the epoch-level adaptation.** DIFE alone saturates the budget cap (5/5 seeds at cap). MV's epoch-level proxy signal enables the combined system to genuinely modulate replay.
->
-> For detailed nuances and open questions, see [CAVEATS.md](CAVEATS.md).
+| | |
+|---|---|
+| **Status** | Reproducible prototype — adaptive replay on split-CIFAR with stated caveats |
+| **Strongest evidence** | DIFE×MV achieves 14% lower forgetting than fixed-rate replay at equal budget (split-CIFAR, 4 seeds, r_max=0.30) |
+| **Not yet shown** | Generalization beyond toy benchmarks; larger task suites; ≥10 seed confirmation |
+| **Fair criticism** | Benchmarks are small-scale (perm-MNIST, split-CIFAR with 2-layer MLP / small CNN). DIFE alone saturates the replay cap — Memory Vortex provides the genuine online adaptation. Broader generalization is open. |
 
 ---
+
 
 ## What This Is
 
