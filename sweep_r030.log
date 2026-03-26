@@ -157,3 +157,7 @@ DIFE x MV Fast-Track Evaluation (Colossus-2)
 [1/1] run   DIFE_MV  seed=3
   [DIFE_MV] task 1: ['0.946']
   [DIFE_MV] task 2: ['0.907', '0.822']
+[Thu Mar 26 05:42:09 UTC 2026] SKIP DIFE_only seed=2
+[Thu Mar 26 05:42:09 UTC 2026] SKIP DIFE_MV seed=2
+[Thu Mar 26 05:42:09 UTC 2026] SKIP DIFE_only seed=3
+[Thu Mar 26 05:42:09 UTC 2026] START DIFE_MV seed=3
