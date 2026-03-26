@@ -1,4 +1,4 @@
-"""Unified training loop for all 9 continual learning methods."""
+"""Unified training loop for all continual learning methods."""
 
 import sys
 import os
@@ -36,6 +36,70 @@ REGULARIZER_METHODS = {"FT", "EWC", "SI"}
 def _get_input_shape(task_loaders) -> tuple:
     x, _ = next(iter(task_loaders[0][0]))
     return tuple(x.shape[1:])
+
+
+def _mir_select(model, buffer, x_batch, y_batch, k, lr, loss_fn, n_candidates=200):
+    """MIR (Maximally Interfered Retrieval) sample selection.
+
+    Selects the k buffer samples that suffer the highest loss increase after a
+    virtual gradient step on the current batch — i.e. the samples most
+    "interfered with" by the upcoming update.
+
+    Algorithm (Aljundi et al., NeurIPS 2019):
+      1. Sample n_candidates from buffer randomly.
+      2. Compute per-sample loss under current parameters: L(x; θ).
+      3. Take a virtual gradient step on x_batch: θ_v = θ - lr * ∇L(x_batch; θ).
+      4. Compute per-sample loss under virtual params: L(x; θ_v).
+      5. Select top-k by interference = L(x; θ_v) - L(x; θ).
+      6. Restore original parameters.
+    """
+    if buffer.size() == 0 or k == 0:
+        return torch.zeros(0), torch.zeros(0, dtype=torch.long)
+
+    n_cands = min(n_candidates, buffer.size())
+    x_cands, y_cands = buffer.sample(n_cands)
+    k = min(k, n_cands)
+
+    # --- Step 1: loss under current params ---
+    _ce_none = nn.CrossEntropyLoss(reduction="none")
+    model.eval()
+    with torch.no_grad():
+        loss_before = _ce_none(model(x_cands), y_cands)  # (n_cands,)
+
+    # --- Steps 2-3: virtual gradient step on current batch ---
+    model.train()
+    saved_params = [p.data.clone() for p in model.parameters()]
+
+    # Clear any stale gradients, compute gradient from current batch
+    for p in model.parameters():
+        if p.grad is not None:
+            p.grad.zero_()
+    virtual_loss = loss_fn(model(x_batch), y_batch)
+    virtual_loss.backward()
+
+    with torch.no_grad():
+        for p in model.parameters():
+            if p.grad is not None:
+                p.data.sub_(lr * p.grad)
+
+    # --- Step 4: loss under virtual params ---
+    model.eval()
+    with torch.no_grad():
+        loss_after = _ce_none(model(x_cands), y_cands)  # (n_cands,)
+
+    # --- Step 5: restore params and clear gradients ---
+    with torch.no_grad():
+        for p, saved in zip(model.parameters(), saved_params):
+            p.data.copy_(saved)
+    for p in model.parameters():
+        if p.grad is not None:
+            p.grad.zero_()
+    model.train()
+
+    # --- Step 6: select top-k by interference score ---
+    scores = loss_after - loss_before
+    top_idx = torch.topk(scores, k).indices
+    return x_cands[top_idx], y_cands[top_idx]
 
 
 def _compute_mv_proxy(model, buffer, n_samples: int) -> float:
@@ -190,13 +254,22 @@ def train_one_method(
 
             _epoch_replay_start = total_replay_samples
             for x_real, y_real in train_loader:
-                # Mix in replay samples
+                # Select replay samples (MIR uses interference scoring; others random)
                 if uses_replay and buffer.size() > 0 and n_replay_this_epoch > 0:
-                    x_rep, y_rep = buffer.sample(n_replay_this_epoch)
-                    x_all = torch.cat([x_real, x_rep], dim=0)
-                    y_all = torch.cat([y_real, y_rep], dim=0)
-                    total_replay_samples += len(x_rep)
-                    _task_replay += len(x_rep)
+                    if method == "MIR":
+                        x_rep, y_rep = _mir_select(
+                            model, buffer, x_real, y_real,
+                            n_replay_this_epoch, cfg.lr, loss_fn,
+                        )
+                    else:
+                        x_rep, y_rep = buffer.sample(n_replay_this_epoch)
+                    if len(x_rep) > 0:
+                        x_all = torch.cat([x_real, x_rep], dim=0)
+                        y_all = torch.cat([y_real, y_rep], dim=0)
+                        total_replay_samples += len(x_rep)
+                        _task_replay += len(x_rep)
+                    else:
+                        x_all, y_all = x_real, y_real
                 else:
                     x_all, y_all = x_real, y_real
 

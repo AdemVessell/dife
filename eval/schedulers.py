@@ -1,4 +1,4 @@
-"""Replay fraction schedulers for all 9 evaluation methods."""
+"""Replay fraction schedulers for all evaluation methods."""
 
 import numpy as np
 from dataclasses import dataclass
@@ -53,6 +53,9 @@ def get_replay_fraction(method: str, state: SchedulerState) -> float:
         # Task-level: pure DIFE envelope.
         # Per-epoch MV modulation is applied in the trainer loop.
         return state.dife_fitter.replay_fraction(t)
+    elif method == "MIR":
+        # MIR uses a fixed replay rate; selection is adaptive (done in trainer).
+        return 0.3
     elif method == "DIFE_flatMatched":
         # Budget is injected externally per task; r_t is overridden in trainer.
         return 0.0

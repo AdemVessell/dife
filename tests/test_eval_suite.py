@@ -106,6 +106,15 @@ class TestConfig:
         assert cfg.n_tasks == 5
         assert cfg.batch_size == 128
         assert cfg.buffer_capacity == 5000
+        assert cfg.n_classes_per_task == 2
+
+    def test_split_cifar100_fields(self):
+        cfg = make_bench_config("split_cifar100")
+        assert cfg.n_tasks == 10
+        assert cfg.batch_size == 128
+        assert cfg.buffer_capacity == 5000
+        assert cfg.n_classes_per_task == 10
+        assert cfg.epochs_per_task == 3
 
     def test_unknown_bench_raises(self):
         with pytest.raises(ValueError):
@@ -344,6 +353,9 @@ class TestSchedulers:
         d = scheduler_state.dife_fitter.replay_fraction(scheduler_state.task_index)
         assert r == pytest.approx(d)
 
+    def test_mir_returns_fixed_rate(self, scheduler_state):
+        assert get_replay_fraction("MIR", scheduler_state) == pytest.approx(0.3)
+
     def test_unknown_method_raises(self, scheduler_state):
         with pytest.raises(ValueError, match="Unknown method"):
             get_replay_fraction("BadMethod", scheduler_state)
@@ -352,7 +364,7 @@ class TestSchedulers:
         methods = [
             "FT", "EWC", "SI",
             "ConstReplay_0.1", "ConstReplay_0.3", "RandReplay",
-            "DIFE_only", "MV_only", "DIFE_MV",
+            "DIFE_only", "MV_only", "DIFE_MV", "MIR",
         ]
         for m in methods:
             r = get_replay_fraction(m, scheduler_state)
@@ -586,12 +598,39 @@ class TestTrainer:
             assert "alpha" in entry
             assert "beta" in entry
 
-    def test_all_nine_methods_complete(self, two_task_loaders, tiny_cfg):
-        """Smoke test: all 9 methods run to completion without error."""
+    def test_mir_uses_buffer(self, two_task_loaders, tiny_cfg):
+        """MIR with 2 tasks: buffer fills after task 1 → replay in task 2."""
+        model = nn.Sequential(nn.Linear(INPUT_DIM, N_CLASSES))
+        result = train_one_method(
+            "MIR", model, two_task_loaders, tiny_cfg, seed=0,
+            best_ewc_lam=500.0, best_si_c=0.1,
+        )
+        assert result["total_replay_samples"] > 0
+
+    def test_mir_replay_matches_const(self, two_task_loaders, tiny_cfg):
+        """MIR and ConstReplay_0.3 should use a similar total replay budget."""
+        model_mir = nn.Sequential(nn.Linear(INPUT_DIM, N_CLASSES))
+        model_const = nn.Sequential(nn.Linear(INPUT_DIM, N_CLASSES))
+        res_mir = train_one_method(
+            "MIR", model_mir, two_task_loaders, tiny_cfg, seed=0,
+            best_ewc_lam=500.0, best_si_c=0.1,
+        )
+        res_const = train_one_method(
+            "ConstReplay_0.3", model_const, two_task_loaders, tiny_cfg, seed=0,
+            best_ewc_lam=500.0, best_si_c=0.1,
+        )
+        n_mir = res_mir["total_replay_samples"]
+        n_const = res_const["total_replay_samples"]
+        # Both use r=0.3; budgets should be within 10% of each other
+        assert n_const > 0
+        assert abs(n_mir - n_const) / n_const <= 0.10
+
+    def test_all_methods_complete(self, two_task_loaders, tiny_cfg):
+        """Smoke test: all 10 methods run to completion without error."""
         methods = [
             "FT", "EWC", "SI",
             "ConstReplay_0.1", "ConstReplay_0.3", "RandReplay",
-            "DIFE_only", "MV_only", "DIFE_MV",
+            "DIFE_only", "MV_only", "DIFE_MV", "MIR",
         ]
         for method in methods:
             model = nn.Sequential(nn.Linear(INPUT_DIM, N_CLASSES))

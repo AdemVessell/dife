@@ -18,6 +18,7 @@ class BenchConfig:
     ewc_lambdas: List[float]
     si_cs: List[float]
     mv_proxy_eval_samples: int
+    n_classes_per_task: int = 10
 
 
 def make_bench_config(name: str, device: str = "cpu") -> BenchConfig:
@@ -36,6 +37,7 @@ def make_bench_config(name: str, device: str = "cpu") -> BenchConfig:
             ewc_lambdas=[100.0, 500.0, 1000.0, 5000.0],
             si_cs=[0.01, 0.1, 1.0],
             mv_proxy_eval_samples=200,
+            n_classes_per_task=10,
         )
     elif name == "split_cifar":
         return BenchConfig(
@@ -51,6 +53,23 @@ def make_bench_config(name: str, device: str = "cpu") -> BenchConfig:
             ewc_lambdas=[100.0, 500.0, 1000.0, 5000.0],
             si_cs=[0.01, 0.1, 1.0],
             mv_proxy_eval_samples=200,
+            n_classes_per_task=2,
+        )
+    elif name == "split_cifar100":
+        return BenchConfig(
+            name=name,
+            n_tasks=10,
+            epochs_per_task=3,
+            lr=1e-3,
+            batch_size=128,
+            buffer_capacity=5000,
+            data_root="./data",
+            device=device,
+            output_dir="results",
+            ewc_lambdas=[100.0, 500.0, 1000.0, 5000.0],
+            si_cs=[0.01, 0.1, 1.0],
+            mv_proxy_eval_samples=200,
+            n_classes_per_task=10,
         )
     else:
         raise ValueError(f"Unknown benchmark: {name}")
