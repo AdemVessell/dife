@@ -161,3 +161,58 @@ DIFE x MV Fast-Track Evaluation (Colossus-2)
 [Thu Mar 26 05:42:09 UTC 2026] SKIP DIFE_MV seed=2
 [Thu Mar 26 05:42:09 UTC 2026] SKIP DIFE_only seed=3
 [Thu Mar 26 05:42:09 UTC 2026] START DIFE_MV seed=3
+============================================================
+DIFE x MV Fast-Track Evaluation (Colossus-2)
+  bench=split_cifar  epochs/task=3  seeds=[3]  methods=1
+  output: results/sweep_repaired/r_max_0.30/split_cifar/
+============================================================
+  replay governor: r_max=0.3  gamma=1.0
+
+--- Running jobs ---
+[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
+
+[1/1] run   DIFE_MV  seed=3
+  [DIFE_MV] task 1: ['0.946']
+  [DIFE_MV] task 2: ['0.907', '0.822']
+  [DIFE_MV] task 3: ['0.872', '0.733', '0.877']
+  Discovered 'mv_online'  val_MAE=0.0069  test_MAE=0.0113  λ=2.64e+00
+  [DIFE_MV] task 4: ['0.747', '0.601', '0.686', '0.958']
+  Discovered 'mv_online'  val_MAE=0.2187  test_MAE=0.5634  λ=1.00e-04
+  [DIFE_MV] task 5: ['0.858', '0.711', '0.769', '0.850', '0.955']
+  Discovered 'mv_online'  val_MAE=0.0492  test_MAE=0.0972  λ=1.13e+01
+  done  AA=0.828  AF=0.104  replay=30,810
+
+--- Analysis ---
+
+--- Saving outputs ---
+  Saved: results/sweep_repaired/r_max_0.30/split_cifar/summary.csv
+  Saved: results/sweep_repaired/r_max_0.30/split_cifar/RESULTS_split_cifar.md
+  Saved: results/sweep_repaired/r_max_0.30/split_cifar/plots/af_vs_budget.png
+  Saved: results/sweep_repaired/r_max_0.30/split_cifar/plots/rt_proxy_seed0.png
+
+============================================================
+FAST-TRACK SUMMARY
+============================================================
+Method                     AA       AF       Replay   Efficiency
+----------------------------------------------------------------
+DIFE_MV              0.828±0.000  0.104±0.000      30,810        0.0000
+
+Outputs:
+  CSV:      results/sweep_repaired/r_max_0.30/split_cifar/summary.csv
+  Markdown: results/sweep_repaired/r_max_0.30/split_cifar/RESULTS_split_cifar.md
+  Plots:    results/sweep_repaired/r_max_0.30/split_cifar/plots/
+
+Done.
+[Thu Mar 26 05:44:58 UTC 2026] END DIFE_MV seed=3 (exit 0)
+[Thu Mar 26 05:44:58 UTC 2026] START DIFE_only seed=4
+============================================================
+DIFE x MV Fast-Track Evaluation (Colossus-2)
+  bench=split_cifar  epochs/task=3  seeds=[4]  methods=1
+  output: results/sweep_repaired/r_max_0.30/split_cifar/
+============================================================
+  replay governor: r_max=0.3  gamma=1.0
+
+--- Running jobs ---
+[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
+
+[1/1] run   DIFE_only  seed=4
