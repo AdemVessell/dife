@@ -1,1 +1,57 @@
 [Thu Mar 26 03:54:36 UTC 2026] START DIFE_only seed=2
+============================================================
+DIFE x MV Fast-Track Evaluation (Colossus-2)
+  bench=split_cifar  epochs/task=3  seeds=[2]  methods=1
+  output: results/sweep_repaired/r_max_0.30/split_cifar/
+============================================================
+  replay governor: r_max=0.3  gamma=1.0
+
+--- Running jobs ---
+[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
+
+[1/1] run   DIFE_only  seed=2
+  [DIFE_only] task 1: ['0.946']
+  [DIFE_only] task 2: ['0.904', '0.818']
+  [DIFE_only] task 3: ['0.914', '0.755', '0.907']
+  [DIFE_only] task 4: ['0.856', '0.697', '0.782', '0.958']
+  [DIFE_only] task 5: ['0.854', '0.720', '0.777', '0.873', '0.946']
+  done  AA=0.834  AF=0.101  replay=36,024
+
+--- Analysis ---
+
+--- Saving outputs ---
+  Saved: results/sweep_repaired/r_max_0.30/split_cifar/summary.csv
+  Saved: results/sweep_repaired/r_max_0.30/split_cifar/RESULTS_split_cifar.md
+  Saved: results/sweep_repaired/r_max_0.30/split_cifar/plots/af_vs_budget.png
+/home/user/dife/run_fast_track.py:434: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+  ax_bot.legend(fontsize=8)
+  Saved: results/sweep_repaired/r_max_0.30/split_cifar/plots/rt_proxy_seed0.png
+
+============================================================
+FAST-TRACK SUMMARY
+============================================================
+Method                     AA       AF       Replay   Efficiency
+----------------------------------------------------------------
+DIFE_only            0.834±0.000  0.101±0.000      36,024        0.0000
+
+Outputs:
+  CSV:      results/sweep_repaired/r_max_0.30/split_cifar/summary.csv
+  Markdown: results/sweep_repaired/r_max_0.30/split_cifar/RESULTS_split_cifar.md
+  Plots:    results/sweep_repaired/r_max_0.30/split_cifar/plots/
+
+Done.
+[Thu Mar 26 03:57:07 UTC 2026] END DIFE_only seed=2 (exit 0)
+[Thu Mar 26 03:57:07 UTC 2026] START DIFE_MV seed=2
+============================================================
+DIFE x MV Fast-Track Evaluation (Colossus-2)
+  bench=split_cifar  epochs/task=3  seeds=[2]  methods=1
+  output: results/sweep_repaired/r_max_0.30/split_cifar/
+============================================================
+  replay governor: r_max=0.3  gamma=1.0
+
+--- Running jobs ---
+[split_cifar] Loaded cached grid search params: EWC lambda=1000.0, SI c=0.01
+
+[1/1] run   DIFE_MV  seed=2
+  [DIFE_MV] task 1: ['0.946']
+  [DIFE_MV] task 2: ['0.906', '0.816']
