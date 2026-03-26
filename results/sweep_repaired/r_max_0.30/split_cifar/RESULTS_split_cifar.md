@@ -6,7 +6,7 @@ Benchmark: Permuted-MNIST  |  Seeds: 3  |  Tasks: 5  |  Epochs/task: 3
 
 | Method | AA ↑ | AF ↓ | BWT ↑ | FWT | Replay Budget | Efficiency* |
 |--------|------|------|-------|-----|--------------|-------------|
-| DIFE_only          | 0.834±0.000 | 0.101±0.000 | -0.101±0.000 | 0.125±0.000 | 36,024±0 | 0.0000 |
+| DIFE_only          | 0.831±0.000 | 0.105±0.000 | -0.105±0.000 | 0.140±0.000 | 36,024±0 | 0.0000 |
 
 \* Efficiency = AF improvement per 10,000 replay samples vs FT baseline.
   Higher is better; 0 = no replay (FT).
@@ -28,9 +28,9 @@ alpha and beta fitted online (causal) per task:
 Method: DIFE_only
   t=1    0.9000       0.0000      0.010000   0.000000
   t=2    0.9000       0.0000      0.010000   0.000000
-  t=3    0.9000       0.0000      0.010000   0.000000
-  t=4    0.9555       0.0000      0.001000   0.000000
-  t=5    0.9586       0.0000      0.001000   0.000000
+  t=3    0.9685       0.0000      0.001000   0.000000
+  t=4    0.9504       0.0000      0.001000   0.000000
+  t=5    0.9572       0.0000      0.001000   0.000000
 
 ---
 
