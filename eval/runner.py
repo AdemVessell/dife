@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(
 import torch
 import numpy as np
 
-from benchmark.data import permuted_mnist, split_cifar10
+from benchmark.data import permuted_mnist, split_cifar10, split_cifar100
 from benchmark.models import fresh_mlp, fresh_cnn
 from eval.config import make_bench_config
 from eval.grid_search import find_best_ewc_lambda, find_best_si_c
@@ -23,6 +23,7 @@ ALL_METHODS = [
     "FT", "EWC", "SI",
     "ConstReplay_0.1", "ConstReplay_0.3", "RandReplay",
     "DIFE_only", "MV_only", "DIFE_MV",
+    "MIR",
 ]
 
 CANONICAL_SEED = 42
@@ -37,6 +38,12 @@ def _load_data(bench_name: str, cfg, seed: int) -> list:
             data_root=cfg.data_root,
             seed=seed,
         )
+    elif bench_name == "split_cifar100":
+        return split_cifar100(
+            n_tasks=cfg.n_tasks,
+            batch_size=cfg.batch_size,
+            data_root=cfg.data_root,
+        )
     else:
         return split_cifar10(
             n_tasks=5,
@@ -45,12 +52,12 @@ def _load_data(bench_name: str, cfg, seed: int) -> list:
         )[: cfg.n_tasks]
 
 
-def _fresh_model(bench_name: str):
+def _fresh_model(bench_name: str, cfg=None):
     """Return a freshly initialised model for the given benchmark."""
     if bench_name == "perm_mnist":
         return fresh_mlp()
-    else:
-        return fresh_cnn(output_dim=2)
+    n_out = cfg.n_classes_per_task if cfg is not None else 2
+    return fresh_cnn(output_dim=n_out)
 
 
 def _grid_search_params(bench_name: str, cfg) -> tuple:
@@ -66,7 +73,7 @@ def _grid_search_params(bench_name: str, cfg) -> tuple:
     torch.manual_seed(CANONICAL_SEED)
     np.random.seed(CANONICAL_SEED)
     loaders_gs = _load_data(bench_name, cfg, seed=CANONICAL_SEED)
-    model_factory = lambda: _fresh_model(bench_name)
+    model_factory = lambda: _fresh_model(bench_name, cfg)
     best_ewc_lam = find_best_ewc_lambda(
         loaders_gs, cfg.ewc_lambdas, cfg.epochs_per_task, cfg.lr, model_factory
     )
@@ -110,7 +117,7 @@ def run_benchmark(bench_name: str, cfg, n_seeds: int) -> dict:
                 continue
 
             print(f"\n[{bench_name}] seed={seed}  method={method}")
-            model = _fresh_model(bench_name)
+            model = _fresh_model(bench_name, cfg)
             result = train_one_method(
                 method=method,
                 model=model,
@@ -121,13 +128,12 @@ def run_benchmark(bench_name: str, cfg, n_seeds: int) -> dict:
                 best_si_c=best_si_c,
             )
 
-            n_classes = 10 if bench_name == "perm_mnist" else 2
             metrics = compute_all_metrics(
                 acc_matrix=result["acc_matrix"],
                 r_t_history=result["r_t_history"],
                 total_replay_samples=result["total_replay_samples"],
                 wall_clock=result["wall_clock_seconds"],
-                n_classes_per_task=n_classes,
+                n_classes_per_task=cfg.n_classes_per_task,
                 pre_task_acc=result.get("pre_task_acc", []),
             )
             metrics["acc_matrix"] = result["acc_matrix"]
