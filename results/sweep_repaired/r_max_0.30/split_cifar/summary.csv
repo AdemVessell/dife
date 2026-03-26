@@ -1,0 +1,2 @@
+method,AA_mean,AA_std,AF_mean,AF_std,BWT_mean,BWT_std,FWT_mean,FWT_std,replay_budget_mean,replay_budget_std,efficiency
+DIFE_MV,0.8261000000000001,0.0,0.10812499999999997,0.0,-0.10812499999999997,0.0,0.132,0.0,32943.0,0.0,0.0
