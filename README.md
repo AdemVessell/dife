@@ -263,6 +263,8 @@ In the current repo evidence:
 * **Memory Vortex** supplies the live replay shaping
 * **the combined controller** is the result that matters
 
+Note: This combined result holds on the split-CIFAR benchmark where task_idx advances across tasks. In single-task settings (such as the current Continuity Ledger evaluations), DIFE returns 1.0 and MV alone accounts for the adaptive advantage. See Current status in Continuity Ledger below.
+
 ---
 
 ## Author
