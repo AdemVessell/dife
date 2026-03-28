@@ -1,6 +1,6 @@
-# DIFE × Memory Vortex
+# DIFE — Decay-Interference Forgetting Equation
 
-**Decay-Interference Forgetting Equation + Adaptive Replay Controller**
+**A closed-form forgetting model for continual learning, and the theoretical foundation of the [Continuity Ledger](https://github.com/AdemVessell/continuity-ledger) adaptive context-control stack.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
@@ -11,17 +11,17 @@
 
 ## What this repo is
 
-This repository contains the **integrated DIFE × Memory Vortex controller** for continual learning.
+This repository contains the **DIFE forgetting equation** and its **integration with Memory Vortex** as a combined replay controller for continual learning.
 
 The central idea is simple:
 
-- **DIFE** models forgetting pressure across tasks
-- **Memory Vortex** shapes replay pressure within a task
+- **DIFE** models forgetting pressure across tasks using a closed-form equation
+- **Memory Vortex** shapes replay pressure within a task using learned basis functions
 - the combined controller gives a **bounded adaptive replay policy**
 
-This repo is the **main benchmark / integration repo**.
+This repo provides the equation, the benchmarks, and the integration proof. The standalone [`memory-vortex`](https://github.com/AdemVessell/memory-vortex) repository contains the epoch-level scheduler component.
 
-The standalone `memory-vortex` repository should be understood as the **component repo** for the scheduler layer. The combined claim lives here.
+DIFE is also a foundational component of the [Continuity Ledger](https://github.com/AdemVessell/continuity-ledger) context-control stack for LLM conversations (see [Current status in Continuity Ledger](#current-status-in-the-continuity-ledger-stack) below).
 
 ---
 
@@ -199,9 +199,11 @@ PROJECT_FINAL_REPORT.md      # full report
 CAVEATS.md                   # explicit limitations and corrections
 ```
 
-Related component repo:
+Related repositories:
 
-* [`memory-vortex`](https://github.com/AdemVessell/memory-vortex)
+* [`memory-vortex`](https://github.com/AdemVessell/memory-vortex) — epoch-level replay scheduler (the active adaptive modulator)
+* [`continuity-ledger`](https://github.com/AdemVessell/continuity-ledger) — LLM context-control stack built on DIFE and Memory Vortex
+* [`small-state-control`](https://github.com/AdemVessell/small-state-control) — operator/controller framework used by the budget controller
 
 ---
 
@@ -226,9 +228,34 @@ print(q)
 
 ---
 
+## Current status in the Continuity Ledger stack
+
+DIFE is one of six repositories in the [Continuity Ledger](https://github.com/AdemVessell/continuity-ledger) project, which applies continual-learning principles to LLM context management. Here, the DIFE equation models cross-task quality decay in the budget controller:
+
+```python
+replay_frac = clip(dife(task_idx) × mv_strength(epoch), 0, max_replay)
+```
+
+**What the ablation found (March 2026, 600 LLM runs):**
+
+In all Continuity Ledger evaluations (Stages 1 through 6.1), `dife(task_idx)` returned **1.0 across every operator step** because `task_idx` never increments — the current evaluation runs single-task conversations. Removing the `dife()` call entirely produced **identical decision sequences** on all 150 task×repeat pairs. Memory Vortex alone (modulation range 0.24–0.34) accounts for the full adaptive advantage over fixed-threshold baselines (~70 percentage points on fact-retention benchmarks across three model families).
+
+**What this means:**
+
+- DIFE's forgetting dynamics are **already embedded** in Memory Vortex's learned fallback coefficients, which were fitted from DIFE×MV controller traces. The equation shaped the training signal even though it's inert at inference time.
+- The direct `dife()` call is **architecturally present but dormant** at single-task scale. It activates when multi-task workflows increment `task_idx`, which hasn't been exercised yet.
+- DIFE's contribution to Continuity Ledger is **foundational rather than operational** — it provided the theoretical framework and the training signal that made Memory Vortex's learned operator effective.
+
+The full ablation results are in [`docs/dife_ablation_verdict.md`](https://github.com/AdemVessell/continuity-ledger/blob/main/docs/dife_ablation_verdict.md) in the Continuity Ledger repo.
+
+---
+
 ## Bottom line
 
-**DIFE × Memory Vortex is a bounded adaptive replay controller.**
+**DIFE is a closed-form forgetting model that serves two roles:**
+
+1. **In the split-CIFAR benchmark:** the combined DIFE × Memory Vortex controller is the strongest result, with DIFE providing the task-level replay envelope.
+2. **In the Continuity Ledger stack:** DIFE's dynamics are embedded in Memory Vortex's learned coefficients. The equation is architecturally present and activates for multi-task workflows, but is dormant at current single-task evaluation scale.
 
 In the current repo evidence:
 
